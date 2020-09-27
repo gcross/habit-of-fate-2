@@ -25,6 +25,7 @@ import System.IO (hClose,hFlush,hPutStr,hPutStrLn,hSetEncoding,utf8)
 import System.IO.Temp (withSystemTempFile)
 
 import HabitOfFate.Data.Content
+import HabitOfFate.Data.Gender
 import HabitOfFate.Data.Story
 import HabitOfFate.Testing
 import HabitOfFate.Testing.Assertions
@@ -42,9 +43,21 @@ runParserOnString contents = withSystemTempFile "story" $ \filepath handle → d
 main ∷ HasCallStack ⇒ IO ()
 main = doMain
   [ testGroup "singleton tags"
-    [ testCase "narrative" $
+    [ testCase "substitute" $
+        runParserOnString "<substitute placeholder=\"hole\"><candidate name=\"Ander\" gender=\"male\"/></substitute>"
+        >>=
+        (@?= Right (Substitute "hole" [Candidate "Ander" Male]))
+    , testCase "narrative" $
         runParserOnString "<narrative title=\"stuff\">happens</narrative>"
         >>=
         (@?= Right (Narrative "stuff" "happens"))
+    , testCase "branch" $
+        runParserOnString "<branch title=\"stuff\" question=\"why?\">story time<choice selection=\"because\"><narrative title=\"answer\">so it would seem</narrative></choice></branch>"
+        >>=
+        (@?= Right (Branch "stuff" "story time" "why?" [("because",Narrative "answer" "so it would seem")]))
+    , testCase "collection" $
+        runParserOnString "<collection order=\"random\"><narrative title=\"title\">content</narrative></collection>"
+        >>=
+        (@?= Right (Collection Random [Narrative "title" "content"]))
     ]
   ]
