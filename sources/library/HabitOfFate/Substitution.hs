@@ -90,7 +90,7 @@ data HasArticle = HasArticle | HasNoArticle
 data Case = Upper | Lower
   deriving (Bounded,Enum,Eq,Ord,Read,Show)
 
-type Parser = Parsec String ()
+type Parser = Parsec Text ()
 
 getCase ∷ Char → Case
 getCase c
@@ -133,7 +133,7 @@ parseChunk = do
 
 instance Exception ParseError
 
-parseSubstitutions ∷ MonadThrow m ⇒ String → m Content
+parseSubstitutions ∷ MonadThrow m ⇒ Text → m Content
 parseSubstitutions content =
   (
     runParser (many parseChunk ∷ Parser [Chunk Char]) () "(content)" content

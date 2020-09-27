@@ -176,7 +176,7 @@ parseContent ∷ Parser Content
 parseContent = characterDataSkippingComments >>= parseContentFromText
 
 parseContentFromText ∷ Text → Parser Content
-parseContentFromText = unpack >>> parseSubstitutions >>> either (show >>> fail) pure
+parseContentFromText = parseSubstitutions >>> either (show >>> fail) pure
 
 parseNarrative ∷ Parser (Narrative Content)
 parseNarrative = withElement "narrative" ["title"] $ \[title] →
