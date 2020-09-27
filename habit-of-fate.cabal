@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ba7ca79b47555f9fbe4ef621e306c63d7d2d48b7a9edb23b086c905f751e7c72
+-- hash: 6a1127b9933301e1acc6b98f0fce2fc12556465a082404b1ae268a5b074605c9
 
 name:           habit-of-fate
 version:        0.1.0.0
@@ -25,12 +25,9 @@ source-repository head
 library
   exposed-modules:
       HabitOfFate.Data.Content
-      HabitOfFate.Data.Event
       HabitOfFate.Data.Gender
       HabitOfFate.Data.Markdown
-      HabitOfFate.Data.Narrative
       HabitOfFate.Data.Story
-      HabitOfFate.Data.Substitute
       HabitOfFate.JSON
       HabitOfFate.Operators
       HabitOfFate.Substitution

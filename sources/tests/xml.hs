@@ -25,13 +25,12 @@ import System.IO (hClose,hFlush,hPutStr,hPutStrLn,hSetEncoding,utf8)
 import System.IO.Temp (withSystemTempFile)
 
 import HabitOfFate.Data.Content
-import HabitOfFate.Data.Narrative
 import HabitOfFate.Data.Story
 import HabitOfFate.Testing
 import HabitOfFate.Testing.Assertions
 import HabitOfFate.XML
 
-runParserOnString ∷ String → IO (Either String (Story Content))
+runParserOnString ∷ String → IO (Either String Story)
 runParserOnString contents = withSystemTempFile "story" $ \filepath handle → do
   hSetEncoding handle utf8
   hPutStrLn handle "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -46,6 +45,6 @@ main = doMain
     [ testCase "narrative" $
         runParserOnString "<narrative title=\"stuff\">happens</narrative>"
         >>=
-        (@?= Right (NarrativeEntry (Narrative "stuff" "happens")))
+        (@?= Right (Narrative "stuff" "happens"))
     ]
   ]

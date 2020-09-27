@@ -44,11 +44,8 @@ import qualified Text.XML.Expat.SAX as SAX
 import Text.XML.Expat.SAX (SAXEvent(..),XMLParseLocation(..))
 
 import HabitOfFate.Data.Content
-import HabitOfFate.Data.Event
 import HabitOfFate.Data.Gender
-import HabitOfFate.Data.Narrative
 import HabitOfFate.Data.Story
-import HabitOfFate.Data.Substitute
 import HabitOfFate.Operators ((⊕),(∈))
 import HabitOfFate.Substitution
 
@@ -170,7 +167,7 @@ parseCandidate ∷ Parser Candidate
 parseCandidate = withElement "candidate" ["name","gender"] $ \[name,gender_string] →
   Candidate name <$> parseGender gender_string
 
-parseSubstitute ∷ Parser Substitute
+parseSubstitute ∷ Parser Story
 parseSubstitute = withElement "substitute" ["placeholder"] $ \[placeholder] →
   Substitute placeholder <$> many1 parseCandidate
 
@@ -180,26 +177,45 @@ parseContent = characterDataSkippingComments >>= parseContentFromText
 parseContentFromText ∷ Text → Parser Content
 parseContentFromText = parseSubstitutions >>> either (show >>> fail) pure
 
-parseNarrative ∷ Parser (Narrative Content)
+parseNarrative ∷ Parser Story
 parseNarrative = withElement "narrative" ["title"] $ \[title] →
   Narrative <$> parseContentFromText title <*> parseContent
 
-parseNonDangerElement ∷ Text → Parser (Content,Narrative Content)
-parseNonDangerElement tag = withElement tag ["choice","title"] $ \[choice,title] →
-  (,) <$> parseContentFromText choice
-      <*> (Narrative <$> parseContentFromText title <*> parseContent)
+data NonDangerElement = NonDangerElement
+  { _nondanger_choice_ ∷ Content
+  , _nondanger_title_ ∷ Content
+  , _nondanger_content_ ∷ Content
+  }
+makeLenses ''NonDangerElement
 
-parseDangerElement ∷ Parser (Content,Narrative Content,Content)
-parseDangerElement = withElement "danger" ["choice","title","question"] $ \[choice,title,question] →
-  (,,) <$> parseContentFromText choice
-       <*> (Narrative <$> parseContentFromText title <*> parseContent)
-       <*> parseContentFromText question
+parseNonDangerElement ∷ Text → Parser NonDangerElement
+parseNonDangerElement tag = withElement tag ["choice","title"] $ \[choice,title] → do
+  _nondanger_choice_ ← parseContentFromText choice
+  _nondanger_title_ ← parseContentFromText title
+  _nondanger_content_ ← parseContent
+  pure $ NonDangerElement{..}
+
+data DangerElement = DangerElement
+  { _danger_choice_ ∷ Content
+  , _danger_title_ ∷ Content
+  , _danger_content_ ∷ Content
+  , _danger_question_ ∷ Content
+  }
+makeLenses ''DangerElement
+
+parseDangerElement ∷ Parser DangerElement
+parseDangerElement = withElement "danger" ["choice","title","question"] $ \[choice,title,question] → do
+  _danger_choice_ ← parseContentFromText choice
+  _danger_title_ ← parseContentFromText title
+  _danger_content_ ← parseContent
+  _danger_question_ ← parseContentFromText question
+  pure $ DangerElement{..}
 
 data EventParseState = EventParseState
-  { _success_element_ ∷ Maybe (Content,Narrative Content)
-  , _danger_element_ ∷ Maybe (Content,Narrative Content,Content)
-  , _averted_element_ ∷ Maybe (Content,Narrative Content)
-  , _failure_element_ ∷ Maybe (Content,Narrative Content)
+  { _success_element_ ∷ Maybe NonDangerElement
+  , _danger_element_ ∷ Maybe DangerElement
+  , _averted_element_ ∷ Maybe NonDangerElement
+  , _failure_element_ ∷ Maybe NonDangerElement
   }
 makeLenses ''EventParseState
 
@@ -210,11 +226,12 @@ updateElement element_name element_ parseNewValue old_event_parse_state = do
   unless (isNothing maybe_old_value) $ fail $ "more than one " ⊕ unpack element_name ⊕ " element found"
   pure new_state
 
-parseEvent ∷ Parser (Event Content)
+parseEvent ∷ Parser Story
 parseEvent = do
   [title,question] ← startElementWithAttributes "event" ["title","question"]
-  _common_narrative_ ← Narrative <$> parseContentFromText title <*> parseContent
-  _common_question_ ← parseContentFromText question
+  common_title ← parseContentFromText title
+  common_content ← parseContent
+  common_question ← parseContentFromText question
   let go ∷ EventParseState → Parser EventParseState
       go old_event_parse_state =
               parseAndUpdateNonDangerElement "success" success_element_
@@ -226,41 +243,57 @@ parseEvent = do
           where
            parseAndUpdateNonDangerElement ∷
              Text →
-             Lens' EventParseState (Maybe (Content,Narrative Content)) →
+             Lens' EventParseState (Maybe NonDangerElement) →
              Parser EventParseState
            parseAndUpdateNonDangerElement name element_ =
              updateElement name element_ (parseNonDangerElement name) old_event_parse_state >>= go
   final_event_parse_state ← go $ EventParseState Nothing Nothing Nothing Nothing
   let checkForNonDangerElement ∷
         String →
-        Lens' EventParseState (Maybe (Content,Narrative Content)) →
-        Parser (Content,Narrative Content)
+        Lens' EventParseState (Maybe NonDangerElement) →
+        Parser NonDangerElement
       checkForNonDangerElement element_name element_ =
         final_event_parse_state |> (^. element_) |> maybe (fail $ "no " ⊕ element_name ⊕ " element") pure
-  (_success_choice_,_success_narrative_) ← checkForNonDangerElement "success" success_element_
-  (_averted_choice_,_averted_narrative_) ← checkForNonDangerElement "averted" averted_element_
-  (_failure_choice_,_failure_narrative_) ← checkForNonDangerElement "failure" failure_element_
-  (_danger_choice_,_danger_narrative_,_danger_question_) ←
-        final_event_parse_state |> (^. danger_element_) |> maybe (fail $ "no danger element") pure
+  success_element ← checkForNonDangerElement "success" success_element_
+  averted_element ← checkForNonDangerElement "averted" averted_element_
+  failure_element ← checkForNonDangerElement "failure" failure_element_
+  danger_element  ← final_event_parse_state |> (^. danger_element_) |> maybe (fail $ "no danger element") pure
+  let success_choice  = success_element ^. nondanger_choice_
+      success_title   = success_element ^. nondanger_title_
+      success_content = success_element ^. nondanger_content_
+
+      averted_choice  = averted_element ^. nondanger_choice_
+      averted_title   = averted_element ^. nondanger_title_
+      averted_content = averted_element ^. nondanger_content_
+
+      failure_choice  = failure_element ^. nondanger_choice_
+      failure_title   = failure_element ^. nondanger_title_
+      failure_content = failure_element ^. nondanger_content_
+
+      danger_choice   = danger_element  ^. danger_choice_
+      danger_title    = danger_element  ^. danger_title_
+      danger_content  = danger_element  ^. danger_content_
+      danger_question = danger_element  ^. danger_question_
   pure $ Event {..}
 
-parseChoice ∷ Parser (Content,Story Content)
+parseChoice ∷ Parser (Content,Story)
 parseChoice = withElement "choice" ["selection"] $ \[selection] →
   (,) <$> parseContentFromText selection <*> parseStory
 
-parseBranch ∷ Parser (Branch Content)
-parseBranch = withElement "branch" ["title","question"] $ \[title,question] →
-  Branch
-    <$> (Narrative <$> parseContentFromText title <*> parseContent)
-    <*> parseContentFromText question
-    <*> sepBy1 parseChoice skipWhitespaceAndComments
+parseBranch ∷ Parser Story
+parseBranch = withElement "branch" ["title","question"] $ \[title_text,question_text] → do
+  title ← parseContentFromText title_text
+  content ← parseContent
+  question ← parseContentFromText question_text
+  choices ← sepBy1 parseChoice skipWhitespaceAndComments
+  pure $ Branch {..}
 
 parseOrderAttribute ∷ Text → Parser Order
 parseOrderAttribute "sequential" = pure Sequential
 parseOrderAttribute "random" = pure Random
 parseOrderAttribute _ = fail "bad ordering specified"
 
-parseCollection ∷ Parser (Collection Content)
+parseCollection ∷ Parser Story
 parseCollection = withElement "collection" ["order"] $ \[order_text] →
   optional skipWhitespaceAndComments
   >>
@@ -268,7 +301,7 @@ parseCollection = withElement "collection" ["order"] $ \[order_text] →
     <$> parseOrderAttribute order_text
     <*> sepBy1 parseStory skipWhitespaceAndComments
 
-runParserOnFile ∷ MonadIO m ⇒ FilePath → m (Either String (Story Content))
+runParserOnFile ∷ MonadIO m ⇒ FilePath → m (Either String Story)
 runParserOnFile filepath = liftIO $
   (
     LB.readFile filepath
@@ -278,22 +311,22 @@ runParserOnFile filepath = liftIO $
   <&>
   first show
 
-parseFile ∷ FilePath → Parser (Story Content)
+parseFile ∷ FilePath → Parser Story
 parseFile =
   (runParserOnFile >>> liftIO)
   >=>
   either (show >>> ("error parsing file: " ⊕) >>> fail) pure
 
-parseFileElement ∷ Parser (Story Content)
+parseFileElement ∷ Parser Story
 parseFileElement = withElement "file" ["path"] $ \[path] →
   parseFile (unpack path)
 
-parseStory ∷ Parser (Story Content)
+parseStory ∷ Parser Story
 parseStory = between skipWhitespaceAndComments skipWhitespaceAndComments $
-      (SubstituteEntry <$> parseSubstitute)
-  <|> (NarrativeEntry <$> parseNarrative)
-  <|> (EventEntry <$> parseEvent)
-  <|> (BranchEntry <$> parseBranch)
-  <|> (CollectionEntry <$> parseCollection)
+      parseSubstitute
+  <|> parseNarrative
+  <|> parseEvent
+  <|> parseBranch
+  <|> parseCollection
   <|> parseFileElement
 

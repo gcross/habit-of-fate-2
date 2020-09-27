@@ -14,37 +14,65 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -}
 
+{-# OPTIONS_GHC -Wno-partial-fields #-}
+
+{-# LANGUAGE DisambiguateRecordFields #-}
 {-# LANGUAGE UnicodeSyntax #-}
 
 module HabitOfFate.Data.Story
-  ( Branch(..)
-  , Collection(..)
+  ( Candidate(..)
   , Order(..)
   , Story(..)
   ) where
 
-import HabitOfFate.Data.Event (Event)
-import HabitOfFate.Data.Narrative (Narrative)
-import HabitOfFate.Data.Substitute (Substitute)
+import Data.Text (Text)
 
-data Branch content = Branch
-  { _branch_narrative ∷ Narrative content
-  , _branch_question_ ∷ content
-  , _branch_choices ∷ [(content,Story content)]
+import HabitOfFate.Data.Content (Content)
+import HabitOfFate.Data.Gender (Gender)
+
+data Candidate = Candidate
+  { _name_ ∷ Text
+  , _gender_ ∷ Gender
   } deriving (Eq,Ord,Read,Show)
 
 data Order = Sequential | Random
   deriving (Bounded,Enum,Eq,Ord,Read,Show)
 
-data Collection content = Collection
-  { _collection_order_ ∷ Order
-  , _collection_stories_ ∷ [Story content]
-  } deriving (Eq,Ord,Read,Show)
-
-data Story content =
-    SubstituteEntry Substitute
-  | NarrativeEntry (Narrative content)
-  | EventEntry (Event content)
-  | BranchEntry (Branch content)
-  | CollectionEntry (Collection content)
+data Story =
+    Substitute
+    { _placeholder_ ∷ Text
+    , _candidates_ ∷ [Candidate]
+    }
+  | Narrative
+    { title ∷ Content
+    , content ∷ Content
+    }
+  | Event
+    { common_title ∷ Content
+    , common_content ∷ Content
+    , common_question ∷ Content
+    , success_choice ∷ Content
+    , success_title ∷ Content
+    , success_content ∷ Content
+    , danger_choice ∷ Content
+    , danger_title ∷ Content
+    , danger_content ∷ Content
+    , danger_question ∷ Content
+    , averted_choice ∷ Content
+    , averted_title ∷ Content
+    , averted_content ∷ Content
+    , failure_choice ∷ Content
+    , failure_title ∷ Content
+    , failure_content ∷ Content
+    }
+  | Branch
+    { title ∷ Content
+    , content ∷ Content
+    , question ∷ Content
+    , choices ∷ [(Content,Story)]
+    }
+  | Collection
+    { order ∷ Order
+    , stories ∷ [Story]
+    }
   deriving (Eq,Ord,Read,Show)
