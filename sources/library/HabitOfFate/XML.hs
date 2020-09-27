@@ -39,8 +39,7 @@ import qualified Data.Text as Text
 import Data.Text (Text,unpack)
 import Flow ((|>))
 import qualified Text.Parsec as Parsec
-import Text.Parsec (ParsecT,(<|>),between,many1,optional,sepBy1,sepEndBy,skipMany,tokenPrim)
-import Text.Parsec.Pos (newPos)
+import Text.Parsec (ParsecT,(<|>),between,many1,optional,sepBy1,sepEndBy,setSourceColumn,setSourceLine,skipMany,tokenPrim)
 import qualified Text.XML.Expat.SAX as SAX
 import Text.XML.Expat.SAX (SAXEvent(..),XMLParseLocation(..))
 
@@ -85,7 +84,10 @@ type Parser = ParsecT [(XMLEvent,XMLParseLocation)] () IO
 parseToken ∷ (XMLEvent → Maybe α) → Parser α
 parseToken testToken = tokenPrim
   (fst >>> show)
-  (\_ (_,XMLParseLocation{..}) _ → newPos "<input>" (fromIntegral xmlLineNumber) (fromIntegral xmlColumnNumber))
+  (\old_pos (_,XMLParseLocation{..}) _ → old_pos
+    |> flip setSourceLine (fromIntegral xmlLineNumber)
+    |> flip setSourceColumn (fromIntegral xmlColumnNumber)
+  )
   (fst >>> testToken)
 
 {-
