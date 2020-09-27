@@ -1,0 +1,97 @@
+name:                habit-of-fate
+version:             0.1.0.0
+github:              "gcross/habit-of-fate"
+license:             AGPL-3
+license-file:        LICENSE
+author:              "Gregory Crosswhite"
+maintainer:          "gcrosswhite@gmail.com"
+copyright:           "2016 Gregory Crosswhite"
+
+#extra-source-files:
+#- README.md
+#- ChangeLog.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/githubuser/habit-of-fate#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+
+library:
+  source-dirs: sources/library
+  ghc-options:
+    -Weverything
+    -Werror
+    -Wno-implicit-prelude
+    -Wno-missing-deriving-strategies
+    -Wno-missing-import-lists
+    -Wno-orphans
+    -Wno-safe
+    -Wno-unsafe
+  dependencies:
+    - aeson
+    - blaze-html
+    - bytestring
+    - call-stack
+    - cmark
+    - containers
+    - data-default
+    - exceptions
+    - filepath
+    - flow
+    - hexpat
+    - interpolate
+    - lens
+    - mono-traversable
+    - mtl
+    - parsec
+    - tasty
+    - tasty-hunit
+    - text
+    - th-lift
+    - th-lift-instances
+    - transformers
+    - unordered-containers
+
+#executables:
+#  habit-of-fate-exe:
+#    main:                Main.hs
+#    source-dirs:         app
+#    ghc-options:
+#    - -threaded
+#    - -rtsopts
+#    - -with-rtsopts=-N
+#    dependencies:
+#    - habit-of-fate
+
+tests:
+  test-substitution:
+    main:                substitution.hs
+    source-dirs:         sources/tests
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - habit-of-fate
+    - call-stack
+    - mono-traversable
+
+  test-xml:
+    main:                xml.hs
+    source-dirs:         sources/tests
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - habit-of-fate
+    - call-stack
+    - filepath
+    - temporary

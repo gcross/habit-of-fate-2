@@ -1,0 +1,101 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: ba7ca79b47555f9fbe4ef621e306c63d7d2d48b7a9edb23b086c905f751e7c72
+
+name:           habit-of-fate
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/githubuser/habit-of-fate#readme>
+homepage:       https://github.com/gcross/habit-of-fate#readme
+bug-reports:    https://github.com/gcross/habit-of-fate/issues
+author:         Gregory Crosswhite
+maintainer:     gcrosswhite@gmail.com
+copyright:      2016 Gregory Crosswhite
+license:        AGPL-3
+license-file:   LICENSE
+build-type:     Simple
+
+source-repository head
+  type: git
+  location: https://github.com/gcross/habit-of-fate
+
+library
+  exposed-modules:
+      HabitOfFate.Data.Content
+      HabitOfFate.Data.Event
+      HabitOfFate.Data.Gender
+      HabitOfFate.Data.Markdown
+      HabitOfFate.Data.Narrative
+      HabitOfFate.Data.Story
+      HabitOfFate.Data.Substitute
+      HabitOfFate.JSON
+      HabitOfFate.Operators
+      HabitOfFate.Substitution
+      HabitOfFate.Testing
+      HabitOfFate.Testing.Assertions
+      HabitOfFate.XML
+  other-modules:
+      Paths_habit_of_fate
+  hs-source-dirs:
+      sources/library
+  ghc-options: -Weverything -Werror -Wno-implicit-prelude -Wno-missing-deriving-strategies -Wno-missing-import-lists -Wno-orphans -Wno-safe -Wno-unsafe
+  build-depends:
+      aeson
+    , base >=4.7 && <5
+    , blaze-html
+    , bytestring
+    , call-stack
+    , cmark
+    , containers
+    , data-default
+    , exceptions
+    , filepath
+    , flow
+    , hexpat
+    , interpolate
+    , lens
+    , mono-traversable
+    , mtl
+    , parsec
+    , tasty
+    , tasty-hunit
+    , text
+    , th-lift
+    , th-lift-instances
+    , transformers
+    , unordered-containers
+  default-language: Haskell2010
+
+test-suite test-substitution
+  type: exitcode-stdio-1.0
+  main-is: substitution.hs
+  other-modules:
+      Paths_habit_of_fate
+  hs-source-dirs:
+      sources/tests
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , call-stack
+    , habit-of-fate
+    , mono-traversable
+  default-language: Haskell2010
+
+test-suite test-xml
+  type: exitcode-stdio-1.0
+  main-is: xml.hs
+  other-modules:
+      Paths_habit_of_fate
+  hs-source-dirs:
+      sources/tests
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , call-stack
+    , filepath
+    , habit-of-fate
+    , temporary
+  default-language: Haskell2010
