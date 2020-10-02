@@ -39,7 +39,19 @@ import qualified Data.Text as Text
 import Data.Text (Text,unpack)
 import Flow ((|>))
 import qualified Text.Parsec as Parsec
-import Text.Parsec (ParsecT,(<|>),between,many1,optional,sepBy1,sepEndBy,setSourceColumn,setSourceLine,skipMany,tokenPrim)
+import Text.Parsec
+  ( ParsecT
+  , (<|>)
+  , between
+  , optional
+  , sepBy1
+  , sepEndBy
+  , sepEndBy1
+  , setSourceColumn
+  , setSourceLine
+  , skipMany
+  , tokenPrim
+  )
 import qualified Text.XML.Expat.SAX as SAX
 import Text.XML.Expat.SAX (SAXEvent(..),XMLParseLocation(..))
 
@@ -130,6 +142,11 @@ skipComments = skipMany comment
 skipWhitespaceAndComments ∷ Parser ()
 skipWhitespaceAndComments = skipMany (whitespace <|> comment)
 
+many1IgnoringSurroundingWhitespaceAndComments ∷ Parser α → Parser [α]
+many1IgnoringSurroundingWhitespaceAndComments p = do
+  optional skipWhitespaceAndComments
+  sepEndBy1 p skipWhitespaceAndComments
+
 characterData ∷ Parser Text
 characterData = parseToken $ (^? _CharacterData)
 
@@ -169,7 +186,7 @@ parseCandidate = withElement "candidate" ["name","gender"] $ \[name,gender_strin
 
 parseSubstitute ∷ Parser Story
 parseSubstitute = withElement "substitute" ["placeholder"] $ \[placeholder] →
-  Substitute placeholder <$> many1 parseCandidate
+  Substitute placeholder <$> many1IgnoringSurroundingWhitespaceAndComments parseCandidate
 
 parseContent ∷ Parser Content
 parseContent = characterDataSkippingComments >>= parseContentFromText
@@ -285,7 +302,7 @@ parseBranch = withElement "branch" ["title","question"] $ \[title_text,question_
   title ← parseContentFromText title_text
   content ← parseContent
   question ← parseContentFromText question_text
-  choices ← sepBy1 parseChoice skipWhitespaceAndComments
+  choices ← sepEndBy1 parseChoice skipWhitespaceAndComments
   pure $ Branch {..}
 
 parseOrderAttribute ∷ Text → Parser Order
