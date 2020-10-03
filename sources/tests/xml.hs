@@ -99,6 +99,43 @@ main = doMain
 |]
         >>=
         (@?= Right (Narrative "stuff" "happens"))
+    , testCase "event" $
+        runParserOnString [i|
+<event title="eve" question="quest"><!-- comment -->
+  common<!-- comment -->
+  <success choice="right" title="good"><!-- comment -->
+    yay<!-- comment -->
+  </success><!-- comment -->
+  <danger choice="gamble" title="possibly" question="roll"><!-- comment -->
+    feeling lucky<!-- comment -->
+  </danger><!-- comment -->
+  <averted choice="soso" title="maybe"><!-- comment -->
+    okay<!-- comment -->
+  </averted><!-- comment -->
+  <failure choice="wrong" title="bad"><!-- comment -->
+    no<!-- comment -->
+  </failure><!-- comment -->
+</event>
+|]
+        >>=
+        (@?= let common_title = "eve"
+                 common_content = "\n  common\n  "
+                 common_question = "quest"
+                 success_choice = "right"
+                 success_title = "good"
+                 success_content = "\n    yay\n  "
+                 danger_choice = "gamble"
+                 danger_title = "possibly"
+                 danger_content = "\n    feeling lucky\n  "
+                 danger_question = "roll"
+                 averted_choice = "soso"
+                 averted_title = "maybe"
+                 averted_content = "\n    okay\n  "
+                 failure_choice = "wrong"
+                 failure_title = "bad"
+                 failure_content = "\n    no\n  "
+             in Right (Event{..})
+        )
     , testCase "branch/choice" $
         runParserOnString [i|
 <branch title="stuff" question="why?"><!-- comment -->
