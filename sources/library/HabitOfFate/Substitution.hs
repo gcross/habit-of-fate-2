@@ -17,41 +17,32 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE UnicodeSyntax #-}
 
 module HabitOfFate.Substitution
-  (
   -- Exceptions
-    SubstitutionException(..)
-  , ParseError
-
-  -- Regular types + lenses
-  , Substitutions
+  ( ParseError
 
   -- Functions
   , parseSubstitutions
   , substitute
-  , substituteEverywhere
   ) where
 
 import Control.Category ((>>>),(<<<))
 import Control.Exception (Exception)
 import Control.Monad.Catch (MonadThrow(throwM))
-import Control.Lens (Lens',Traversal',(&),(<&>),(.~),(^.),(^?!),_head,lens)
+import Control.Lens (Lens',Traversal',(&),(<&>),(.~),(^?!),_head,lens)
 import Data.Bool (bool)
 import Data.Char (isUpper,toLower,toUpper)
-import qualified Data.HashMap.Strict as HashMap
-import Data.HashMap.Strict (HashMap)
-import Control.Monad (msum,when)
-import Data.MonoTraversable (onull)
+import Control.Monad (msum)
 import Data.Text (Text,pack)
 import Flow ((|>))
 import Text.Parsec hiding (uncons)
 
 import HabitOfFate.Data.Content
 import HabitOfFate.Data.Gender
-import HabitOfFate.Data.Markdown
 import HabitOfFate.Operators ((∈),(⊕))
 
 uppercase_ ∷ Lens' Char Bool
@@ -153,49 +144,20 @@ parseSubstitutions content =
       (rest_cs,rest_intermediates) = consolidateLiterals rest_to_consolidate
     consolidateLiterals rest_intermediates = ([],rest_intermediates)
 
-data SubstitutionException =
-    NoSuchKeyException Text
-  | EmptyNameException
-  deriving (Eq,Ord,Read,Show)
-instance Exception SubstitutionException
-
-type Substitutions = HashMap Text Gendered
-
-lookupAndApplySubstitution ∷ MonadThrow m ⇒ Substitutions → SubstitutionData → m Text
-lookupAndApplySubstitution table s = do
-  gendered@(Gendered name _) ←
-    maybe
-      (throwM $ NoSuchKeyException $ s ^. key_)
-      pure
-      (HashMap.lookup (s ^. key_) table)
-  when (onull name) $ throwM EmptyNameException
+substitute ∷ Gendered → SubstitutionData → Text
+substitute (gendered@Gendered{..}) SubstitutionData{..} =
   let article ∷ Text
       article
-        | s ^. has_article_ =
+        | has_article =
             if isVowel (name ^?! _head)
               then "an "
               else "a "
         | otherwise = ""
-      word = applyKind (s ^. kind_) gendered
-  pure $
-    (article ⊕ word) & first_uppercase_ .~ (s ^. is_uppercase_)
+      word = applyKind kind gendered
+  in (article ⊕ word) & first_uppercase_ .~ is_uppercase
 
 data KeyError = KeyError Text deriving (Show)
 instance Exception KeyError
-
-substitute ∷ MonadThrow m ⇒ Substitutions → Content → m Markdown
-substitute table (Content text) =
-  mapM
-    (\case
-      Literal l → pure l
-      Substitution s → lookupAndApplySubstitution table s
-    )
-    text
-  <&>
-  (mconcat >>> Markdown)
-
-substituteEverywhere ∷ (MonadThrow m, Traversable t) ⇒ Substitutions → t Content → m (t Markdown)
-substituteEverywhere = substitute >>> mapM
 
 applyKind ∷ Kind → Gendered → Text
 applyKind Name (Gendered name _) = name

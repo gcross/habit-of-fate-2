@@ -82,6 +82,7 @@ tests:
     - habit-of-fate
     - call-stack
     - mono-traversable
+    - text
 
   test-xml:
     main:                xml.hs

@@ -32,16 +32,12 @@ module HabitOfFate.Data.Content
   , Kind(..)
   , Referrent(..)
   , SubstitutionData(..)
-  , has_article_
-  , is_uppercase_
-  , kind_
-  , key_
   , extractAllPlaceholders
   , extractPlaceholders
   ) where
 
 import Control.Category ((>>>))
-import Control.Lens ((^.),makeLenses)
+import Control.Lens ((&),makeLenses)
 import Data.Containers (setFromList)
 import Data.Default (Default)
 import Data.HashSet (HashSet)
@@ -71,10 +67,10 @@ data Kind =
   deriving (Eq,Ord,Read,Show)
 
 data SubstitutionData = SubstitutionData
-  { _has_article_ ∷ Bool
-  , _is_uppercase_ ∷ Bool
-  , _kind_ ∷ Kind
-  , _key_ ∷ Text
+  { has_article ∷ Bool
+  , is_uppercase ∷ Bool
+  , kind ∷ Kind
+  , placeholder ∷ Text
   }
   deriving (Eq,Ord,Read,Show)
 makeLenses ''SubstitutionData
@@ -102,7 +98,7 @@ extractPlaceholders ∷ Content → HashSet Text
 extractPlaceholders =
   unwrapContent
   >>>
-  mapMaybe (\case { Literal _ → Nothing; Substitution s → Just (s ^. key_) })
+  mapMaybe (\case { Substitution s → Just (s & placeholder); _ → Nothing })
   >>>
   setFromList
 

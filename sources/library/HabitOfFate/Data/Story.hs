@@ -19,29 +19,20 @@
 {-# LANGUAGE DisambiguateRecordFields #-}
 {-# LANGUAGE UnicodeSyntax #-}
 
-module HabitOfFate.Data.Story
-  ( Candidate(..)
-  , Order(..)
-  , Story(..)
-  ) where
+module HabitOfFate.Data.Story (Order(..),Story(..)) where
 
 import Data.Text (Text)
 
 import HabitOfFate.Data.Content (Content)
-import HabitOfFate.Data.Gender (Gender)
-
-data Candidate = Candidate
-  { _name_ ∷ Text
-  , _gender_ ∷ Gender
-  } deriving (Eq,Ord,Read,Show)
+import HabitOfFate.Data.Gender (Gendered)
 
 data Order = Sequential | Random
   deriving (Bounded,Enum,Eq,Ord,Read,Show)
 
 data Story =
     Substitute
-    { _placeholder_ ∷ Text
-    , _candidates_ ∷ [Candidate]
+    { placeholder ∷ Text
+    , candidates ∷ [Gendered]
     }
   | Narrative
     { title ∷ Content

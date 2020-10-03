@@ -21,14 +21,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE UnicodeSyntax #-}
 
-module HabitOfFate.Data.Gender
-  ( Gender(..)
-  , Gendered(..)
-  , gendered_name_
-  , gendered_gender_
-  ) where
-
-import Control.Lens.TH (makeLenses)
+module HabitOfFate.Data.Gender (Gender(..),Gendered(..)) where
 
 import Data.Aeson (FromJSON(..), ToJSON(..), Value(..), (.:), object, withObject, withText)
 import Data.String.Interpolate (i)
@@ -51,15 +44,14 @@ instance FromJSON Gender where
     wrong → fail [i|gender must be "male", "female", or "neuter", not "#{wrong}"|]
 
 data Gendered = Gendered
-  { _gendered_name_ ∷ Text
-  , _gendered_gender_ ∷ Gender
+  { name ∷ Text
+  , gender ∷ Gender
   } deriving (Eq,Ord,Read,Show)
-makeLenses ''Gendered
 
 instance ToJSON Gendered where
   toJSON Gendered{..} = object
-    [ "name" .== toJSON _gendered_name_
-    , "gender" .== toJSON _gendered_gender_
+    [ "name" .== toJSON name
+    , "gender" .== toJSON gender
     ]
 
 instance FromJSON Gendered where

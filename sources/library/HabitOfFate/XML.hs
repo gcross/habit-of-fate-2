@@ -184,13 +184,13 @@ parseGender "female" = pure Female
 parseGender "neuter" = pure Neuter
 parseGender _ = fail "unexpected gender"
 
-parseCandidate ∷ Parser Candidate
-parseCandidate = withElement "candidate" ["name","gender"] $ \[name,gender_string] →
-  Candidate name <$> parseGender gender_string
+parseGendered ∷ Parser Gendered
+parseGendered = withElement "candidate" ["name","gender"] $ \[name,gender_string] →
+  Gendered name <$> parseGender gender_string
 
 parseSubstitute ∷ Parser Story
 parseSubstitute = withElement "substitute" ["placeholder"] $ \[placeholder] →
-  Substitute placeholder <$> many1IgnoringSurroundingWhitespaceAndComments parseCandidate
+  Substitute placeholder <$> many1IgnoringSurroundingWhitespaceAndComments parseGendered
 
 parseContent ∷ Parser Content
 parseContent = characterDataSkippingComments >>= parseContentFromText
