@@ -94,4 +94,5 @@ tests:
     - habit-of-fate
     - call-stack
     - filepath
+    - interpolate
     - temporary

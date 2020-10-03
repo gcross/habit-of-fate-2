@@ -15,11 +15,13 @@
 -}
 
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE UnicodeSyntax #-}
 
 module Main where
 
 import Data.CallStack (HasCallStack)
+import Data.String.Interpolate (i)
 import System.FilePath (FilePath)
 import System.IO (hClose,hFlush,hPutStr,hPutStrLn,hSetEncoding,utf8)
 import System.IO.Temp (withSystemTempFile)
@@ -61,20 +63,38 @@ main = doMain
         (@?= Right (Collection Random [Narrative "title" "content"]))
     ]
   , testGroup "whitespace"
-    [ testCase "surrounding candidate tag" $
-        runParserOnString "<substitute placeholder=\"hole\"> <candidate name=\"Ander\" gender=\"male\"/> </substitute>"
+    [ testCase "substitute/candidate" $
+        runParserOnString [i|
+<substitute placeholder=\"hole\">
+  <candidate name=\"Ander\" gender=\"male\"/>
+</substitute>
+|]
         >>=
         (@?= Right (Substitute "hole" [Candidate "Ander" Male]))
-    , testCase "surrounding narrative tag" $
-        runParserOnString " <narrative title=\"stuff\">happens</narrative> "
+    , testCase "narrative" $
+        runParserOnString [i|
+<narrative title=\"stuff\">happens</narrative>
+|]
         >>=
         (@?= Right (Narrative "stuff" "happens"))
-    , testCase "after choice tag" $
-        runParserOnString "<branch title=\"stuff\" question=\"why?\">story time<choice selection=\"because\"><narrative title=\"answer\">so it would seem</narrative></choice> </branch>"
+    , testCase "branch/choice" $
+        runParserOnString [i|
+<branch title=\"stuff\" question=\"why?\">
+  story time
+  <choice selection=\"because\">
+    <narrative title=\"answer\">so it would seem</narrative>
+  </choice>
+</branch>
+|]
         >>=
-        (@?= Right (Branch "stuff" "story time" "why?" [("because",Narrative "answer" "so it would seem")]))
-    , testCase "around contained collection elements" $
-        runParserOnString "<collection order=\"random\"> <narrative title=\"title1\">content1</narrative> <narrative title=\"title2\">content2</narrative> </collection>"
+        (@?= Right (Branch "stuff" "\n  story time\n  " "why?" [("because",Narrative "answer" "so it would seem")]))
+    , testCase "collection" $
+        runParserOnString [i|
+<collection order=\"random\">
+  <narrative title=\"title1\">content1</narrative>
+  <narrative title=\"title2\">content2</narrative>
+</collection>
+|]
         >>=
         (@?= Right (Collection Random [Narrative "title1" "content1", Narrative "title2" "content2"]))
     ]
