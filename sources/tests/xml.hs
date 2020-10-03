@@ -62,37 +62,37 @@ main = doMain
         >>=
         (@?= Right (Collection Random [Narrative "title" "content"]))
     ]
-  , testGroup "whitespace"
+  , testGroup "whitespace and comments ignored when appropriate"
     [ testCase "substitute/candidate" $
         runParserOnString [i|
-<substitute placeholder=\"hole\">
-  <candidate name=\"Ander\" gender=\"male\"/>
+<substitute placeholder=\"hole\"><!-- comment -->
+  <candidate name=\"Ander\" gender=\"male\"/><!-- comment -->
 </substitute>
 |]
         >>=
         (@?= Right (Substitute "hole" [Candidate "Ander" Male]))
     , testCase "narrative" $
         runParserOnString [i|
-<narrative title=\"stuff\">happens</narrative>
+<narrative title=\"stuff\"><!-- comment -->happens<!-- comment --></narrative>
 |]
         >>=
         (@?= Right (Narrative "stuff" "happens"))
     , testCase "branch/choice" $
         runParserOnString [i|
-<branch title=\"stuff\" question=\"why?\">
-  story time
-  <choice selection=\"because\">
-    <narrative title=\"answer\">so it would seem</narrative>
-  </choice>
+<branch title=\"stuff\" question=\"why?\"><!-- comment -->
+  story time<!-- comment -->
+  <choice selection=\"because\"><!-- comment -->
+    <narrative title=\"answer\">so it would seem<!-- comment --></narrative><!-- comment -->
+  </choice><!-- comment -->
 </branch>
 |]
         >>=
         (@?= Right (Branch "stuff" "\n  story time\n  " "why?" [("because",Narrative "answer" "so it would seem")]))
     , testCase "collection" $
         runParserOnString [i|
-<collection order=\"random\">
-  <narrative title=\"title1\">content1</narrative>
-  <narrative title=\"title2\">content2</narrative>
+<collection order=\"random\"><!-- comment -->
+  <narrative title=\"title1\">content1<!-- comment --></narrative><!-- comment -->
+  <narrative title=\"title2\">content2<!-- comment --></narrative><!-- comment -->
 </collection>
 |]
         >>=

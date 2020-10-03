@@ -151,7 +151,7 @@ characterData ∷ Parser Text
 characterData = parseToken $ (^? _CharacterData)
 
 characterDataSkippingComments ∷ Parser Text
-characterDataSkippingComments = mconcat <$> sepEndBy characterData skipComments
+characterDataSkippingComments = mconcat <$> (optional skipComments >> sepEndBy characterData skipComments)
 
 parseAttributes ∷ [Text] → [(Text,Text)] → Parser [Text]
 parseAttributes expected_keys attributes = do
