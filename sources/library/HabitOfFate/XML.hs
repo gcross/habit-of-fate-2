@@ -50,6 +50,7 @@ import Text.Parsec
   , setSourceColumn
   , setSourceLine
   , skipMany
+  , skipMany1
   , tokenPrim
   )
 import qualified Text.XML.Expat.SAX as SAX
@@ -141,6 +142,9 @@ skipComments = skipMany comment
 
 skipWhitespaceAndComments ∷ Parser ()
 skipWhitespaceAndComments = skipMany (whitespace <|> comment)
+
+skipWhitespaceAndComments1 ∷ Parser ()
+skipWhitespaceAndComments1 = skipMany1 (whitespace <|> comment)
 
 many1IgnoringSurroundingWhitespaceAndComments ∷ Parser α → Parser [α]
 many1IgnoringSurroundingWhitespaceAndComments p = do
@@ -252,10 +256,10 @@ parseEvent = do
   let go ∷ EventParseState → Parser EventParseState
       go old_event_parse_state =
               parseAndUpdateNonDangerElement "success" success_element_
-          <|> parseAndUpdateNonDangerElement "averted" success_element_
-          <|> parseAndUpdateNonDangerElement "failure" success_element_
+          <|> parseAndUpdateNonDangerElement "averted" averted_element_
+          <|> parseAndUpdateNonDangerElement "failure" failure_element_
           <|> (updateElement "danger" danger_element_ parseDangerElement old_event_parse_state >>= go)
-          <|> (skipWhitespaceAndComments >> go old_event_parse_state)
+          <|> (skipWhitespaceAndComments1 >> go old_event_parse_state)
           <|> (endElement "event" >> pure old_event_parse_state)
           where
            parseAndUpdateNonDangerElement ∷

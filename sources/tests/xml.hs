@@ -16,6 +16,7 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE UnicodeSyntax #-}
 
 module Main where
@@ -53,6 +54,27 @@ main = doMain
         runParserOnString "<narrative title=\"stuff\">happens</narrative>"
         >>=
         (@?= Right (Narrative "stuff" "happens"))
+    , testCase "event" $
+        runParserOnString "<event title=\"eve\" question=\"quest\">common<success choice=\"right\" title=\"good\">yay</success><danger choice=\"gamble\" title=\"possibly\" question=\"roll\">feeling lucky</danger><averted choice=\"soso\" title=\"maybe\">okay</averted><failure choice=\"wrong\" title=\"bad\">no</failure></event>"
+        >>=
+        (@?= let common_title = "eve"
+                 common_content = "common"
+                 common_question = "quest"
+                 success_choice = "right"
+                 success_title = "good"
+                 success_content = "yay"
+                 danger_choice = "gamble"
+                 danger_title = "possibly"
+                 danger_content = "feeling lucky"
+                 danger_question = "roll"
+                 averted_choice = "soso"
+                 averted_title = "maybe"
+                 averted_content = "okay"
+                 failure_choice = "wrong"
+                 failure_title = "bad"
+                 failure_content = "no"
+             in Right (Event{..})
+        )
     , testCase "branch" $
         runParserOnString "<branch title=\"stuff\" question=\"why?\">story time<choice selection=\"because\"><narrative title=\"answer\">so it would seem</narrative></choice></branch>"
         >>=
