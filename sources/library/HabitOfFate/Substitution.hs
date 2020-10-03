@@ -14,6 +14,8 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -}
 
+{-# OPTIONS_GHC -Wno-orphans #-}
+
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE UnicodeSyntax #-}
@@ -43,8 +45,6 @@ import qualified Data.HashMap.Strict as HashMap
 import Data.HashMap.Strict (HashMap)
 import Control.Monad (msum,when)
 import Data.MonoTraversable (onull)
-import Data.Sequences (singleton)
-import qualified Data.Text as Text
 import Data.Text (Text,pack)
 import Flow ((|>))
 import Text.Parsec hiding (uncons)
@@ -90,6 +90,8 @@ data HasArticle = HasArticle | HasNoArticle
 data Case = Upper | Lower
   deriving (Bounded,Enum,Eq,Ord,Read,Show)
 
+data Intermediate = IntermediateLetter Char | IntermediateSubstitution SubstitutionData
+
 type Parser = Parsec Text ()
 
 getCase ∷ Char → Case
@@ -97,8 +99,8 @@ getCase c
   | isUpper c = Upper
   | otherwise = Lower
 
-parseSubstitutionChunk ∷ HasArticle → Maybe Case → Parser (Chunk Char)
-parseSubstitutionChunk article maybe_case = do
+parseSubstitutionData ∷ HasArticle → Maybe Case → Parser SubstitutionData
+parseSubstitutionData article maybe_case = do
   kind ←
     try (string "|" >> pure Name)
     <|>
@@ -112,45 +114,44 @@ parseSubstitutionChunk article maybe_case = do
       pure
       maybe_case
   key ← many alphaNum <&> pack
-  pure $ Substitution $
-    SubstitutionData
-      (article == HasArticle)
-      (case_ == Upper)
-      kind
-      key
+  pure $ SubstitutionData (article == HasArticle) (case_ == Upper) kind key
 
-parseChunk ∷ Parser (Chunk Char)
-parseChunk = do
+parseIntermediate ∷ Parser Intermediate
+parseIntermediate = do
   maybe_case_ ← (lookAhead letter <&> (getCase >>> Just)) <|> pure Nothing
   (try $ do
     _ ← char 'a' <|> char 'A'
     _ ← optional $ char 'n'
     _ ← many1 <<< choice $ map char " \t\r\n"
-    parseSubstitutionChunk HasArticle maybe_case_
+    parseSubstitutionData HasArticle maybe_case_ <&> IntermediateSubstitution
    )
-    <|> parseSubstitutionChunk HasNoArticle maybe_case_
-    <|> (anyToken <&> Literal)
+    <|> (parseSubstitutionData HasNoArticle maybe_case_ <&> IntermediateSubstitution)
+    <|> (anyToken <&> IntermediateLetter)
 
 instance Exception ParseError
 
 parseSubstitutions ∷ MonadThrow m ⇒ Text → m Content
 parseSubstitutions content =
   (
-    runParser (many parseChunk ∷ Parser [Chunk Char]) () "(content)" content
+    runParser (many parseIntermediate ∷ Parser [Intermediate]) () "(content)" content
     |> either throwM pure
   )
   <&>
-  (mergeChunks >>> map ((pack >>> Text.reverse) <$>) >>> Content)
+  (consolidateIntermediates >>> Content)
  where
-  mergeChunks ∷ [Chunk Char] → [Chunk [Char]]
-  mergeChunks [] = []
-  mergeChunks (first:rest) = go (singleton <$> first) rest
+  consolidateIntermediates ∷ [Intermediate] → [Chunk]
+  consolidateIntermediates [] = []
+  consolidateIntermediates (remaining@(next:rest)) = case next of
+    IntermediateLetter _ →
+      let (cs,rest_intermediates) = consolidateLiterals remaining
+      in Literal (pack cs):consolidateIntermediates rest_intermediates
+    IntermediateSubstitution substitution_data → Substitution substitution_data:consolidateIntermediates rest
    where
-    go ∷ Chunk [Char] → [Chunk Char] → [Chunk [Char]]
-    go previous [] = previous:[]
-    go previous (next@(Substitution _):inner_rest) = previous:go (singleton <$> next) inner_rest
-    go previous@(Substitution _) (next:inner_rest) = previous:go (singleton <$> next) inner_rest
-    go (Literal x) (Literal y:inner_rest) = go (Literal (y:x)) inner_rest
+    consolidateLiterals ∷ [Intermediate] → (String,[Intermediate])
+    consolidateLiterals (IntermediateLetter c:rest_to_consolidate) = (c:rest_cs,rest_intermediates)
+     where
+      (rest_cs,rest_intermediates) = consolidateLiterals rest_to_consolidate
+    consolidateLiterals rest_intermediates = ([],rest_intermediates)
 
 data SubstitutionException =
     NoSuchKeyException Text

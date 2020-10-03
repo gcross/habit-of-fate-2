@@ -79,10 +79,10 @@ data SubstitutionData = SubstitutionData
   deriving (Eq,Ord,Read,Show)
 makeLenses ''SubstitutionData
 
-data Chunk α = Literal α | Substitution SubstitutionData
-  deriving (Eq,Functor,Ord,Read,Show)
-type instance Element Content = Chunk Text
-newtype Content = Content { unwrapContent ∷ [Chunk Text] }
+data Chunk = Literal Text | Substitution SubstitutionData
+  deriving (Eq,Ord,Read,Show)
+type instance Element Content = Chunk
+newtype Content = Content { unwrapContent ∷ [Chunk] }
   deriving
     ( Default
     , Eq
