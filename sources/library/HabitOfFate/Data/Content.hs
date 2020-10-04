@@ -14,93 +14,17 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -}
 
-{-# OPTIONS_GHC -Wno-redundant-constraints #-}
-
-{-# LANGUAGE DeriveFunctor #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE StandaloneDeriving #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UnicodeSyntax #-}
 
-module HabitOfFate.Data.Content
-  ( Chunk(..)
-  , Content(..)
-  , Kind(..)
-  , Referrent(..)
-  , SubstitutionData(..)
-  , extractAllPlaceholders
-  , extractPlaceholders
-  ) where
+module HabitOfFate.Data.Content (Content(..)) where
 
 import Control.Category ((>>>))
-import Control.Lens ((&),makeLenses)
-import Data.Containers (setFromList)
-import Data.Default (Default)
-import Data.HashSet (HashSet)
-import Data.Maybe (mapMaybe)
-import Data.MonoTraversable (Element,MonoFoldable,MonoPointed)
-import Data.Sequences (singleton)
 import Data.String (IsString(..))
-import Data.Text (Text)
 
-data Referrent =
-    Subject
-  | Object
-  | Possessive
-  | ProperPossessive
-  | Reflexive
-  | Category
-  | CategoryPlural
-  | Offspring
-  | OffspringPlural
-  | Marital
-  | MaritalPlural
-  deriving (Bounded,Enum,Eq,Ord,Read,Show)
+import HabitOfFate.Data.Substitutions
 
-data Kind =
-    Name
-  | Referrent Referrent
+newtype Content = Unformatted Substitutions
   deriving (Eq,Ord,Read,Show)
-
-data SubstitutionData = SubstitutionData
-  { has_article ∷ Bool
-  , is_uppercase ∷ Bool
-  , kind ∷ Kind
-  , placeholder ∷ Text
-  }
-  deriving (Eq,Ord,Read,Show)
-makeLenses ''SubstitutionData
-
-data Chunk = Literal Text | Substitution SubstitutionData
-  deriving (Eq,Ord,Read,Show)
-type instance Element Content = Chunk
-newtype Content = Content { unwrapContent ∷ [Chunk] }
-  deriving
-    ( Default
-    , Eq
-    , MonoFoldable
-    , MonoPointed
-    , Monoid
-    , Ord
-    , Read
-    , Semigroup
-    , Show
-    )
 
 instance IsString Content where
-  fromString = fromString >>> Literal >>> singleton
-
-extractPlaceholders ∷ Content → HashSet Text
-extractPlaceholders =
-  unwrapContent
-  >>>
-  mapMaybe (\case { Substitution s → Just (s & placeholder); _ → Nothing })
-  >>>
-  setFromList
-
-extractAllPlaceholders ∷ Foldable f ⇒ f Content → HashSet Text
-extractAllPlaceholders = foldMap extractPlaceholders
+  fromString = fromString >>> Unformatted

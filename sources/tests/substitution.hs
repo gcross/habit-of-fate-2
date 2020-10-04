@@ -35,7 +35,7 @@ module Main where
 import Data.CallStack (HasCallStack)
 import Data.Text (Text)
 
-import HabitOfFate.Data.Content
+import HabitOfFate.Data.Substitutions
 import HabitOfFate.Data.Gender
 import HabitOfFate.Substitution
 import HabitOfFate.Testing
@@ -47,9 +47,9 @@ main = doMain
     [ testGroup "singleton"
       [ testGroup "literal"
         [ testCase "one char" $
-            parseSubstitutions "l" >>= (@?= Content [Literal "l"])
+            parseSubstitutions "l" >>= (@?= Substitutions [Literal "l"])
         , testCase "whole string" $
-            parseSubstitutions "xyz" >>= (@?= Content [Literal "xyz"])
+            parseSubstitutions "xyz" >>= (@?= Substitutions [Literal "xyz"])
         ]
       , testGroup "substitution"
         [ testGroup "has_article" $
@@ -61,7 +61,7 @@ main = doMain
                 testCase test_name $
                   parseSubstitutions text_to_parse
                   >>=
-                  (@?= Content [Substitution SubstitutionData{..}])
+                  (@?= Substitutions [Substitution SubstitutionData{..}])
           in
             [ test "name" "|name" False
             , test "name" "a |name" True
@@ -74,7 +74,7 @@ main = doMain
                 testCase test_name $
                   parseSubstitutions text_to_parse
                   >>=
-                  (@?= Content [Substitution SubstitutionData{..}])
+                  (@?= Substitutions [Substitution SubstitutionData{..}])
           in
             [ test "|name" "|name" "name" False Name
             , test "|Name" "|Name" "Name" True Name
@@ -94,7 +94,7 @@ main = doMain
                 testCase test_name $
                   parseSubstitutions text_to_parse
                   >>=
-                  (@?= Content [Substitution SubstitutionData{..}])
+                  (@?= Substitutions [Substitution SubstitutionData{..}])
           in
             [ test "name" "|name" Name
             , test "subject" "he/she|name" $ Referrent Subject
@@ -116,7 +116,7 @@ main = doMain
           in
             parseSubstitutions "|name"
             >>=
-            (@?= Content [Substitution SubstitutionData{..}])
+            (@?= Substitutions [Substitution SubstitutionData{..}])
         ]
       ]
     ]

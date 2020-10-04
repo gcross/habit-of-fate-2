@@ -41,8 +41,8 @@ import Data.Text (Text,pack)
 import Flow ((|>))
 import Text.Parsec hiding (uncons)
 
-import HabitOfFate.Data.Content
 import HabitOfFate.Data.Gender
+import HabitOfFate.Data.Substitutions
 import HabitOfFate.Operators ((∈),(⊕))
 
 uppercase_ ∷ Lens' Char Bool
@@ -121,16 +121,16 @@ parseIntermediate = do
 
 instance Exception ParseError
 
-parseSubstitutions ∷ MonadThrow m ⇒ Text → m Content
+parseSubstitutions ∷ MonadThrow m ⇒ Text → m Substitutions
 parseSubstitutions content =
   (
     runParser (many parseIntermediate ∷ Parser [Intermediate]) () "(content)" content
     |> either throwM pure
   )
   <&>
-  (consolidateIntermediates >>> Content)
+  (consolidateIntermediates >>> Substitutions)
  where
-  consolidateIntermediates ∷ [Intermediate] → [Chunk]
+  consolidateIntermediates ∷ [Intermediate] → [SubstitutionChunk]
   consolidateIntermediates [] = []
   consolidateIntermediates (remaining@(next:rest)) = case next of
     IntermediateLetter _ →

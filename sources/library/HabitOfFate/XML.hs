@@ -192,15 +192,15 @@ parseSubstitute ∷ Parser Story
 parseSubstitute = withElement "substitute" ["placeholder"] $ \[placeholder] →
   Substitute placeholder <$> many1IgnoringSurroundingWhitespaceAndComments parseGendered
 
-parseContent ∷ Parser Content
-parseContent = characterDataSkippingComments >>= parseContentFromText
+parseAttributeContent ∷ Text → Parser Content
+parseAttributeContent = parseSubstitutions >>> either (show >>> fail) (Unformatted >>> pure)
 
-parseContentFromText ∷ Text → Parser Content
-parseContentFromText = parseSubstitutions >>> either (show >>> fail) pure
+parseBodyContent ∷ Parser Content
+parseBodyContent = characterDataSkippingComments >>= parseAttributeContent
 
 parseNarrative ∷ Parser Story
 parseNarrative = withElement "narrative" ["title"] $ \[title] →
-  Narrative <$> parseContentFromText title <*> parseContent
+  Narrative <$> parseAttributeContent title <*> parseBodyContent
 
 data NonDangerElement = NonDangerElement
   { _nondanger_choice_ ∷ Content
@@ -211,9 +211,9 @@ makeLenses ''NonDangerElement
 
 parseNonDangerElement ∷ Text → Parser NonDangerElement
 parseNonDangerElement tag = withElement tag ["choice","title"] $ \[choice,title] → do
-  _nondanger_choice_ ← parseContentFromText choice
-  _nondanger_title_ ← parseContentFromText title
-  _nondanger_content_ ← parseContent
+  _nondanger_choice_ ← parseAttributeContent choice
+  _nondanger_title_ ← parseAttributeContent title
+  _nondanger_content_ ← parseBodyContent
   pure $ NonDangerElement{..}
 
 data DangerElement = DangerElement
@@ -226,10 +226,10 @@ makeLenses ''DangerElement
 
 parseDangerElement ∷ Parser DangerElement
 parseDangerElement = withElement "danger" ["choice","title","question"] $ \[choice,title,question] → do
-  _danger_choice_ ← parseContentFromText choice
-  _danger_title_ ← parseContentFromText title
-  _danger_content_ ← parseContent
-  _danger_question_ ← parseContentFromText question
+  _danger_choice_ ← parseAttributeContent choice
+  _danger_title_ ← parseAttributeContent title
+  _danger_content_ ← parseBodyContent
+  _danger_question_ ← parseAttributeContent question
   pure $ DangerElement{..}
 
 data EventParseState = EventParseState
@@ -250,9 +250,9 @@ updateElement element_name element_ parseNewValue old_event_parse_state = do
 parseEvent ∷ Parser Story
 parseEvent = do
   [title,question] ← startElementWithAttributes "event" ["title","question"]
-  common_title ← parseContentFromText title
-  common_content ← parseContent
-  common_question ← parseContentFromText question
+  common_title ← parseAttributeContent title
+  common_content ← parseBodyContent
+  common_question ← parseAttributeContent question
   let go ∷ EventParseState → Parser EventParseState
       go old_event_parse_state =
               parseAndUpdateNonDangerElement "success" success_element_
@@ -299,13 +299,13 @@ parseEvent = do
 
 parseChoice ∷ Parser (Content,Story)
 parseChoice = withElement "choice" ["selection"] $ \[selection] →
-  (,) <$> parseContentFromText selection <*> parseStory
+  (,) <$> parseAttributeContent selection <*> parseStory
 
 parseBranch ∷ Parser Story
 parseBranch = withElement "branch" ["title","question"] $ \[title_text,question_text] → do
-  title ← parseContentFromText title_text
-  content ← parseContent
-  question ← parseContentFromText question_text
+  title ← parseAttributeContent title_text
+  content ← parseBodyContent
+  question ← parseAttributeContent question_text
   choices ← sepEndBy1 parseChoice skipWhitespaceAndComments
   pure $ Branch {..}
 
