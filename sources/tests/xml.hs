@@ -30,18 +30,22 @@ import System.IO.Temp (withSystemTempFile)
 import HabitOfFate.Data.Content
 import HabitOfFate.Data.Gender
 import HabitOfFate.Data.Story
+import HabitOfFate.Operators ((⊕))
 import HabitOfFate.Testing
 import HabitOfFate.Testing.Assertions
 import HabitOfFate.XML
 
-runParserOnString ∷ String → IO (Either String Story)
-runParserOnString contents = withSystemTempFile "story" $ \filepath handle → do
+withContentsInTemporaryFile ∷ String → (FilePath → IO α) → IO α
+withContentsInTemporaryFile contents f = withSystemTempFile "story" $ \filepath handle → do
   hSetEncoding handle utf8
   hPutStrLn handle "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
   hPutStrLn handle contents
   hFlush handle
   hClose handle
-  runParserOnFile filepath
+  f filepath
+
+runParserOnString ∷ String → IO (Either String Story)
+runParserOnString = flip withContentsInTemporaryFile runParserOnFile
 
 main ∷ HasCallStack ⇒ IO ()
 main = doMain
@@ -83,6 +87,10 @@ main = doMain
         runParserOnString "<collection order=\"random\"><narrative title=\"title\">content</narrative></collection>"
         >>=
         (@?= Right (Collection Random [Narrative "title" "content"]))
+    , testCase "file" $ withContentsInTemporaryFile "<narrative title=\"stuff\">happens</narrative>" $ \filepath →
+        runParserOnString ("<file path=\"" ⊕ filepath ⊕ "\"/>")
+        >>=
+        (@?= Right (Narrative "stuff" "happens"))
     ]
   , testGroup "whitespace and comments ignored when appropriate"
     [ testCase "substitute/candidate" $
