@@ -45,7 +45,6 @@ import Text.Parsec
   , between
   , optional
   , sepBy1
-  , sepEndBy
   , sepEndBy1
   , setSourceColumn
   , setSourceLine
@@ -59,6 +58,7 @@ import Text.XML.Expat.SAX (SAXEvent(..),XMLParseLocation(..))
 import HabitOfFate.Data.Content
 import HabitOfFate.Data.Gender
 import HabitOfFate.Data.Story
+import HabitOfFate.Data.Substitutions
 import HabitOfFate.Operators ((⊕),(∈))
 import HabitOfFate.Substitution
 
@@ -154,8 +154,8 @@ many1IgnoringSurroundingWhitespaceAndComments p = do
 characterData ∷ Parser Text
 characterData = parseToken $ (^? _CharacterData)
 
-characterDataSkippingComments ∷ Parser Text
-characterDataSkippingComments = mconcat <$> (optional skipComments >> sepEndBy characterData skipComments)
+characterDataSkippingComments1 ∷ Parser Text
+characterDataSkippingComments1 = mconcat <$> (optional skipComments >> sepEndBy1 characterData skipComments)
 
 parseAttributes ∷ [Text] → [(Text,Text)] → Parser [Text]
 parseAttributes expected_keys attributes = do
@@ -192,44 +192,51 @@ parseSubstitute ∷ Parser Story
 parseSubstitute = withElement "substitute" ["placeholder"] $ \[placeholder] →
   Substitute placeholder <$> many1IgnoringSurroundingWhitespaceAndComments parseGendered
 
-parseAttributeContent ∷ Text → Parser Content
-parseAttributeContent = parseSubstitutions >>> either (show >>> fail) (Unformatted >>> pure)
+parseTextSubstitutions ∷ Text → Parser Substitutions
+parseTextSubstitutions = parseSubstitutions >>> either (show >>> fail) pure
+
+parseContentChunk ∷ Parser ContentChunk
+parseContentChunk =
+      (Unformatted <$> (characterDataSkippingComments1 >>= parseTextSubstitutions))
+  <|> (Bold <$> withElement "b" [] (const parseBodyContent))
 
 parseBodyContent ∷ Parser Content
-parseBodyContent = characterDataSkippingComments >>= parseAttributeContent
+parseBodyContent = do
+  optional skipComments
+  sepEndBy1 parseContentChunk skipComments <&> Content
 
 parseNarrative ∷ Parser Story
 parseNarrative = withElement "narrative" ["title"] $ \[title] →
-  Narrative <$> parseAttributeContent title <*> parseBodyContent
+  Narrative <$> parseTextSubstitutions title <*> parseBodyContent
 
 data NonDangerElement = NonDangerElement
-  { _nondanger_choice_ ∷ Content
-  , _nondanger_title_ ∷ Content
+  { _nondanger_choice_ ∷ Substitutions
+  , _nondanger_title_ ∷ Substitutions
   , _nondanger_content_ ∷ Content
   }
 makeLenses ''NonDangerElement
 
 parseNonDangerElement ∷ Text → Parser NonDangerElement
 parseNonDangerElement tag = withElement tag ["choice","title"] $ \[choice,title] → do
-  _nondanger_choice_ ← parseAttributeContent choice
-  _nondanger_title_ ← parseAttributeContent title
+  _nondanger_choice_ ← parseTextSubstitutions choice
+  _nondanger_title_ ← parseTextSubstitutions title
   _nondanger_content_ ← parseBodyContent
   pure $ NonDangerElement{..}
 
 data DangerElement = DangerElement
-  { _danger_choice_ ∷ Content
-  , _danger_title_ ∷ Content
+  { _danger_choice_ ∷ Substitutions
+  , _danger_title_ ∷ Substitutions
   , _danger_content_ ∷ Content
-  , _danger_question_ ∷ Content
+  , _danger_question_ ∷ Substitutions
   }
 makeLenses ''DangerElement
 
 parseDangerElement ∷ Parser DangerElement
 parseDangerElement = withElement "danger" ["choice","title","question"] $ \[choice,title,question] → do
-  _danger_choice_ ← parseAttributeContent choice
-  _danger_title_ ← parseAttributeContent title
+  _danger_choice_ ← parseTextSubstitutions choice
+  _danger_title_ ← parseTextSubstitutions title
   _danger_content_ ← parseBodyContent
-  _danger_question_ ← parseAttributeContent question
+  _danger_question_ ← parseTextSubstitutions question
   pure $ DangerElement{..}
 
 data EventParseState = EventParseState
@@ -250,9 +257,9 @@ updateElement element_name element_ parseNewValue old_event_parse_state = do
 parseEvent ∷ Parser Story
 parseEvent = do
   [title,question] ← startElementWithAttributes "event" ["title","question"]
-  common_title ← parseAttributeContent title
+  common_title ← parseTextSubstitutions title
   common_content ← parseBodyContent
-  common_question ← parseAttributeContent question
+  common_question ← parseTextSubstitutions question
   let go ∷ EventParseState → Parser EventParseState
       go old_event_parse_state =
               parseAndUpdateNonDangerElement "success" success_element_
@@ -297,15 +304,15 @@ parseEvent = do
       danger_question = danger_element  ^. danger_question_
   pure $ Event {..}
 
-parseChoice ∷ Parser (Content,Story)
+parseChoice ∷ Parser (Substitutions,Story)
 parseChoice = withElement "choice" ["selection"] $ \[selection] →
-  (,) <$> parseAttributeContent selection <*> parseStory
+  (,) <$> parseTextSubstitutions selection <*> parseStory
 
 parseBranch ∷ Parser Story
 parseBranch = withElement "branch" ["title","question"] $ \[title_text,question_text] → do
-  title ← parseAttributeContent title_text
+  title ← parseTextSubstitutions title_text
   content ← parseBodyContent
-  question ← parseAttributeContent question_text
+  question ← parseTextSubstitutions question_text
   choices ← sepEndBy1 parseChoice skipWhitespaceAndComments
   pure $ Branch {..}
 

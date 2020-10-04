@@ -157,4 +157,14 @@ main = doMain
         >>=
         (@?= Right (Collection Random [Narrative "title1" "content1", Narrative "title2" "content2"]))
     ]
+  , testGroup "content"
+    [ testCase "bold" $
+        runParserOnString "<narrative title=\"stuff\"><b>happens</b></narrative>"
+        >>=
+        (@?= Right (Narrative "stuff" $ Content [Bold "happens"]))
+    , testCase "mixed" $
+        runParserOnString "<narrative title=\"format\">regular<b>bold</b><b>BOLD</b>unbold</narrative>"
+        >>=
+        (@?= Right (Narrative "format" $ Content ["regular", Bold "bold", Bold "BOLD", "unbold"]))
+    ]
   ]

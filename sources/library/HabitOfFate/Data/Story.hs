@@ -25,6 +25,7 @@ import Data.Text (Text)
 
 import HabitOfFate.Data.Content (Content)
 import HabitOfFate.Data.Gender (Gendered)
+import HabitOfFate.Data.Substitutions (Substitutions)
 
 data Order = Sequential | Random
   deriving (Bounded,Enum,Eq,Ord,Read,Show)
@@ -35,32 +36,32 @@ data Story =
     , candidates ∷ [Gendered]
     }
   | Narrative
-    { title ∷ Content
+    { title ∷ Substitutions
     , content ∷ Content
     }
   | Event
-    { common_title ∷ Content
+    { common_title ∷ Substitutions
     , common_content ∷ Content
-    , common_question ∷ Content
-    , success_choice ∷ Content
-    , success_title ∷ Content
+    , common_question ∷ Substitutions
+    , success_choice ∷ Substitutions
+    , success_title ∷ Substitutions
     , success_content ∷ Content
-    , danger_choice ∷ Content
-    , danger_title ∷ Content
+    , danger_choice ∷ Substitutions
+    , danger_title ∷ Substitutions
     , danger_content ∷ Content
-    , danger_question ∷ Content
-    , averted_choice ∷ Content
-    , averted_title ∷ Content
+    , danger_question ∷ Substitutions
+    , averted_choice ∷ Substitutions
+    , averted_title ∷ Substitutions
     , averted_content ∷ Content
-    , failure_choice ∷ Content
-    , failure_title ∷ Content
+    , failure_choice ∷ Substitutions
+    , failure_title ∷ Substitutions
     , failure_content ∷ Content
     }
   | Branch
-    { title ∷ Content
+    { title ∷ Substitutions
     , content ∷ Content
-    , question ∷ Content
-    , choices ∷ [(Content,Story)]
+    , question ∷ Substitutions
+    , choices ∷ [(Substitutions,Story)]
     }
   | Collection
     { order ∷ Order

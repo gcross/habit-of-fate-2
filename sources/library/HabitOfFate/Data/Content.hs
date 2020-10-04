@@ -16,15 +16,21 @@
 
 {-# LANGUAGE UnicodeSyntax #-}
 
-module HabitOfFate.Data.Content (Content(..)) where
+module HabitOfFate.Data.Content (Content(..),ContentChunk(..)) where
 
 import Control.Category ((>>>))
 import Data.String (IsString(..))
 
 import HabitOfFate.Data.Substitutions
 
-newtype Content = Unformatted Substitutions
+data ContentChunk = Unformatted Substitutions | Bold Content
+  deriving (Eq,Ord,Read,Show)
+
+instance IsString ContentChunk where
+  fromString = fromString >>> Unformatted
+
+newtype Content = Content { unwrapContent ∷ [ContentChunk] }
   deriving (Eq,Ord,Read,Show)
 
 instance IsString Content where
-  fromString = fromString >>> Unformatted
+  fromString = fromString >>> (:[]) >>> Content
