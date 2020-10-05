@@ -28,11 +28,13 @@ module HabitOfFate.XML (runParserOnFile) where
 import Control.Category ((>>>))
 import Control.Lens (Lens',Prism',(&),(^.),(^?),(<<?~),(<&>),makeLenses,prism')
 import Control.Lens.Extras (is)
-import Control.Monad ((>=>),unless)
+import Control.Monad ((>=>),forM_,unless,when)
 import Control.Monad.IO.Class (MonadIO(..))
 import Data.Bifunctor (first)
 import Data.Bool (bool)
 import qualified Data.ByteString.Lazy as LB
+import qualified Data.HashSet as HashSet
+import Data.HashSet (HashSet)
 import Data.List ((\\))
 import Data.Maybe (fromJust,isNothing)
 import qualified Data.Text as Text
@@ -43,7 +45,9 @@ import Text.Parsec
   ( ParsecT
   , (<|>)
   , between
+  , getState
   , optional
+  , putState
   , sepBy1
   , sepEndBy1
   , setSourceColumn
@@ -89,7 +93,7 @@ _Comment = prism'
   (\a → Comment a)
   (\case {Comment a → Just a; _ → Nothing})
 
-type Parser = ParsecT [(XMLEvent,XMLParseLocation)] () IO
+type Parser = ParsecT [(XMLEvent,XMLParseLocation)] (HashSet Text) IO
 
 parseToken ∷ (XMLEvent → Maybe α) → Parser α
 parseToken testToken = tokenPrim
@@ -189,11 +193,21 @@ parseGendered = withElement "candidate" ["name","gender"] $ \[name,gender_string
   Gendered name <$> parseGender gender_string
 
 parseSubstitute ∷ Parser Story
-parseSubstitute = withElement "substitute" ["placeholder"] $ \[placeholder] →
+parseSubstitute = withElement "substitute" ["placeholder"] $ \[placeholder] → do
+  old_placeholders ← getState
+  when (HashSet.member placeholder old_placeholders) $
+    fail $ "a substitution already exists for " ⊕ unpack placeholder
+  putState $ HashSet.insert placeholder old_placeholders
   Substitute placeholder <$> many1IgnoringSurroundingWhitespaceAndComments parseGendered
 
 parseTextSubstitutions ∷ Text → Parser Substitutions
-parseTextSubstitutions = parseSubstitutions >>> either (show >>> fail) pure
+parseTextSubstitutions text = do
+  substitutions ← text |> parseSubstitutions |> either (show >>> fail) pure
+  known_placeholders ← getState
+  forM_ (extractPlaceholders substitutions) $ \placeholder →
+    unless (HashSet.member placeholder known_placeholders) $
+      fail $ "no given substitution for placeholder " ⊕ unpack placeholder
+  pure substitutions
 
 parseContentChunk ∷ Parser ContentChunk
 parseContentChunk =
@@ -322,19 +336,22 @@ parseOrderAttribute "random" = pure Random
 parseOrderAttribute _ = fail "bad ordering specified"
 
 parseCollection ∷ Parser Story
-parseCollection = withElement "collection" ["order"] $ \[order_text] →
+parseCollection = withElement "collection" ["order"] $ \[order_text] → do
+  old_placeholders ← getState
   optional skipWhitespaceAndComments
-  >>
-  Collection
-    <$> parseOrderAttribute order_text
-    <*> sepBy1 parseStory skipWhitespaceAndComments
+  collection ←
+    Collection
+      <$> parseOrderAttribute order_text
+      <*> sepBy1 parseStory skipWhitespaceAndComments
+  putState old_placeholders
+  pure collection
 
 runParserOnFile ∷ MonadIO m ⇒ FilePath → m (Either String Story)
 runParserOnFile filepath = liftIO $
   (
     LB.readFile filepath
     >>=
-    (SAX.parseLocations SAX.defaultParseOptions >>> Parsec.runParserT (xmlDeclaration >> parseStory) () filepath)
+    (SAX.parseLocations SAX.defaultParseOptions >>> Parsec.runParserT (xmlDeclaration >> parseStory) HashSet.empty filepath)
   )
   <&>
   first show

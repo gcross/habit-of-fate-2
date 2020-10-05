@@ -21,15 +21,19 @@
 
 module Main where
 
+import Control.Lens (_Left)
+import Control.Lens.Extras (is)
 import Data.CallStack (HasCallStack)
 import Data.String.Interpolate (i)
 import System.FilePath (FilePath)
 import System.IO (hClose,hFlush,hPutStr,hPutStrLn,hSetEncoding,utf8)
 import System.IO.Temp (withSystemTempFile)
+import Test.Tasty.HUnit ((@?))
 
 import HabitOfFate.Data.Content
 import HabitOfFate.Data.Gender
 import HabitOfFate.Data.Story
+import HabitOfFate.Data.Substitutions
 import HabitOfFate.Operators ((⊕))
 import HabitOfFate.Testing
 import HabitOfFate.Testing.Assertions
@@ -165,7 +169,7 @@ main = doMain
         >>=
         (@?= Right (Collection Random [Narrative "title1" "content1", Narrative "title2" "content2"]))
     ]
-  , testGroup "content"
+  , testGroup "content formatting"
     [ testCase "bold" $
         runParserOnString "<narrative title=\"stuff\"><b>happens</b></narrative>"
         >>=
@@ -174,5 +178,46 @@ main = doMain
         runParserOnString "<narrative title=\"format\">regular<b>bold</b><b>BOLD</b>unbold</narrative>"
         >>=
         (@?= Right (Narrative "format" $ Content ["regular", Bold "bold", Bold "BOLD", "unbold"]))
+    ]
+  , testGroup "substitutions"
+    [ testCase "known placeholder" $
+        runParserOnString [i|
+<collection order="sequential">
+  <substitute placeholder="Name">
+    <candidate name="Ander" gender="male"/>
+  </substitute>
+  <narrative title="title1">|Name</narrative>
+</collection>
+|]
+        >>=
+        (@?= Right
+          (Collection Sequential
+            [Substitute "Name" [Gendered "Ander" Male]
+            ,Narrative
+              "title1"
+              (Content
+                [Unformatted
+                  (Substitutions
+                    [Substitution $ SubstitutionData
+                      { has_article = False
+                      , is_uppercase = True
+                      , kind = Name
+                      , placeholder = "Name"
+                      }
+                    ]
+                  )
+                ]
+              )
+            ]
+          )
+        )
+    , testCase "unknown placeholder" $
+        runParserOnString [i|
+<collection order="sequential">
+  <narrative title="title1">|Name</narrative>
+</collection>
+|]
+        >>=
+        (\result → is _Left result @? ("Result was not Left: " ⊕ show result))
     ]
   ]

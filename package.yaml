@@ -96,4 +96,6 @@ tests:
     - call-stack
     - filepath
     - interpolate
+    - lens
+    - tasty-hunit
     - temporary

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c0e3d4c455b555768a209e38b93c18fa2d09bb8c15e5a4b63d254e970d4c8d57
+-- hash: f329cdcbc653e4a8c404bdbbbb709dc2ef03e2429d8ebfc39deb5dc37b255d8f
 
 name:           habit-of-fate
 version:        0.1.0.0
@@ -97,5 +97,7 @@ test-suite test-xml
     , filepath
     , habit-of-fate
     , interpolate
+    , lens
+    , tasty-hunit
     , temporary
   default-language: Haskell2010
