@@ -58,7 +58,7 @@ main = doMain
     [ testCase "substitute" $
         runParserOnString "<substitute placeholder=\"hole\"><candidate name=\"Ander\" gender=\"male\"/></substitute>"
         >>=
-        (@?= Right (Substitute "hole" [Gendered "Ander" Male]))
+        (@?= Right (Substitute "hole" (Gendered "Ander" Male:|[])))
     , testCase "narrative" $
         runParserOnString "<narrative title=\"stuff\">happens</narrative>"
         >>=
@@ -105,7 +105,7 @@ main = doMain
 </substitute>
 |]
         >>=
-        (@?= Right (Substitute "hole" [Gendered "Ander" Male]))
+        (@?= Right (Substitute "hole" (Gendered "Ander" Male:|[])))
     , testCase "narrative" $
         runParserOnString [i|
 <narrative title="stuff"><!-- comment -->happens<!-- comment --></narrative>
@@ -193,7 +193,7 @@ main = doMain
         >>=
         (@?= Right
           (Collection Sequential
-            (Substitute "Name" [Gendered "Ander" Male]
+            (Substitute "Name" (Gendered "Ander" Male:|[])
             :|Narrative
               "title1"
               (Content

@@ -34,7 +34,7 @@ data Order = Sequential | Random
 data Story =
     Substitute
     { placeholder ∷ Text
-    , candidates ∷ [Gendered]
+    , candidates ∷ NonEmpty Gendered
     }
   | Narrative
     { title ∷ Substitutions

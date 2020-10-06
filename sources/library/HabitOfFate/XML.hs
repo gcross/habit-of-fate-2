@@ -168,10 +168,10 @@ skipWhitespaceAndComments = skipMany (whitespace <|> comment)
 skipWhitespaceAndComments1 ∷ Parser ()
 skipWhitespaceAndComments1 = skipMany1 (whitespace <|> comment)
 
-many1IgnoringSurroundingWhitespaceAndComments ∷ Parser α → Parser [α]
-many1IgnoringSurroundingWhitespaceAndComments p = do
+manyNonEmptyIgnoringSurroundingWhitespaceAndComments ∷ Parser α → Parser (NonEmpty α)
+manyNonEmptyIgnoringSurroundingWhitespaceAndComments p = do
   optional skipWhitespaceAndComments
-  sepEndBy1 p skipWhitespaceAndComments
+  sepEndByNonEmpty p skipWhitespaceAndComments
 
 characterData ∷ Parser Text
 characterData = parseToken $ (^? _CharacterData)
@@ -216,7 +216,7 @@ parseSubstitute = withElement "substitute" ["placeholder"] $ \[placeholder] → 
   when (HashSet.member placeholder old_placeholders) $
     fail $ "a substitution already exists for " ⊕ unpack placeholder
   putState $ HashSet.insert placeholder old_placeholders
-  Substitute placeholder <$> many1IgnoringSurroundingWhitespaceAndComments parseGendered
+  Substitute placeholder <$> manyNonEmptyIgnoringSurroundingWhitespaceAndComments parseGendered
 
 parseTextSubstitutions ∷ Text → Parser Substitutions
 parseTextSubstitutions text = do
