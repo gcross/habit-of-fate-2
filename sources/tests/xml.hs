@@ -87,7 +87,7 @@ main = doMain
     , testCase "branch" $
         runParserOnString "<branch title=\"stuff\" question=\"why?\">story time<choice selection=\"because\"><narrative title=\"answer\">so it would seem</narrative></choice></branch>"
         >>=
-        (@?= Right (Branch "stuff" "story time" "why?" [("because",Narrative "answer" "so it would seem")]))
+        (@?= Right (Branch "stuff" "story time" "why?" (("because",Narrative "answer" "so it would seem"):|[])))
     , testCase "collection" $
         runParserOnString "<collection order=\"random\"><narrative title=\"title\">content</narrative></collection>"
         >>=
@@ -159,7 +159,7 @@ main = doMain
 </branch>
 |]
         >>=
-        (@?= Right (Branch "stuff" "\n  story time\n  " "why?" [("because",Narrative "answer" "so it would seem")]))
+        (@?= Right (Branch "stuff" "\n  story time\n  " "why?" (("because",Narrative "answer" "so it would seem"):|[])))
     , testCase "collection" $
         runParserOnString [i|
 <collection order="random"><!-- comment -->

@@ -62,7 +62,7 @@ data Story =
     { title ∷ Substitutions
     , content ∷ Content
     , question ∷ Substitutions
-    , choices ∷ [(Substitutions,Story)]
+    , choices ∷ NonEmpty (Substitutions,Story)
     }
   | Collection
     { order ∷ Order

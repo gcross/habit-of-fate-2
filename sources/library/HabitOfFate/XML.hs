@@ -50,6 +50,7 @@ import Text.Parsec
   , optional
   , putState
   , sepBy
+  , sepEndBy
   , sepEndBy1
   , setSourceColumn
   , setSourceLine
@@ -99,6 +100,14 @@ type Parser = ParsecT [(XMLEvent,XMLParseLocation)] (HashSet Text) IO
 sepByNonEmpty ∷ Parser α → Parser sep → Parser (NonEmpty α)
 sepByNonEmpty p psep =
   sepBy p psep
+  >>=
+  \case
+    (x:xs) → pure (x:|xs)
+    [] → fail "at least one element required"
+
+sepEndByNonEmpty ∷ Parser α → Parser sep → Parser (NonEmpty α)
+sepEndByNonEmpty p psep =
+  sepEndBy p psep
   >>=
   \case
     (x:xs) → pure (x:|xs)
@@ -336,7 +345,7 @@ parseBranch = withElement "branch" ["title","question"] $ \[title_text,question_
   title ← parseTextSubstitutions title_text
   content ← parseBodyContent
   question ← parseTextSubstitutions question_text
-  choices ← sepEndBy1 parseChoice skipWhitespaceAndComments
+  choices ← sepEndByNonEmpty parseChoice skipWhitespaceAndComments
   pure $ Branch {..}
 
 parseOrderAttribute ∷ Text → Parser Order
