@@ -36,6 +36,7 @@ import qualified Data.ByteString.Lazy as LB
 import qualified Data.HashSet as HashSet
 import Data.HashSet (HashSet)
 import Data.List ((\\))
+import Data.List.NonEmpty (NonEmpty(..))
 import Data.Maybe (fromJust,isNothing)
 import qualified Data.Text as Text
 import Data.Text (Text,unpack)
@@ -48,7 +49,7 @@ import Text.Parsec
   , getState
   , optional
   , putState
-  , sepBy1
+  , sepBy
   , sepEndBy1
   , setSourceColumn
   , setSourceLine
@@ -94,6 +95,14 @@ _Comment = prism'
   (\case {Comment a → Just a; _ → Nothing})
 
 type Parser = ParsecT [(XMLEvent,XMLParseLocation)] (HashSet Text) IO
+
+sepByNonEmpty ∷ Parser α → Parser sep → Parser (NonEmpty α)
+sepByNonEmpty p psep =
+  sepBy p psep
+  >>=
+  \case
+    (x:xs) → pure (x:|xs)
+    [] → fail "at least one element required"
 
 parseToken ∷ (XMLEvent → Maybe α) → Parser α
 parseToken testToken = tokenPrim
@@ -342,7 +351,7 @@ parseCollection = withElement "collection" ["order"] $ \[order_text] → do
   collection ←
     Collection
       <$> parseOrderAttribute order_text
-      <*> sepBy1 parseStory skipWhitespaceAndComments
+      <*> sepByNonEmpty parseStory skipWhitespaceAndComments
   putState old_placeholders
   pure collection
 

@@ -24,6 +24,7 @@ module Main where
 import Control.Lens (_Left)
 import Control.Lens.Extras (is)
 import Data.CallStack (HasCallStack)
+import Data.List.NonEmpty (NonEmpty(..))
 import Data.String.Interpolate (i)
 import System.FilePath (FilePath)
 import System.IO (hClose,hFlush,hPutStr,hPutStrLn,hSetEncoding,utf8)
@@ -90,7 +91,7 @@ main = doMain
     , testCase "collection" $
         runParserOnString "<collection order=\"random\"><narrative title=\"title\">content</narrative></collection>"
         >>=
-        (@?= Right (Collection Random [Narrative "title" "content"]))
+        (@?= Right (Collection Random (Narrative "title" "content":|[])))
     , testCase "file" $ withContentsInTemporaryFile "<narrative title=\"stuff\">happens</narrative>" $ \filepath →
         runParserOnString ("<file path=\"" ⊕ filepath ⊕ "\"/>")
         >>=
@@ -167,7 +168,7 @@ main = doMain
 </collection>
 |]
         >>=
-        (@?= Right (Collection Random [Narrative "title1" "content1", Narrative "title2" "content2"]))
+        (@?= Right (Collection Random (Narrative "title1" "content1":|Narrative "title2" "content2":[])))
     ]
   , testGroup "content formatting"
     [ testCase "bold" $
@@ -192,8 +193,8 @@ main = doMain
         >>=
         (@?= Right
           (Collection Sequential
-            [Substitute "Name" [Gendered "Ander" Male]
-            ,Narrative
+            (Substitute "Name" [Gendered "Ander" Male]
+            :|Narrative
               "title1"
               (Content
                 [Unformatted
@@ -208,7 +209,8 @@ main = doMain
                   )
                 ]
               )
-            ]
+            :[]
+            )
           )
         )
     , testCase "unknown placeholder" $

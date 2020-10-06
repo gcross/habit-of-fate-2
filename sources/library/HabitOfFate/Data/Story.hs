@@ -21,6 +21,7 @@
 
 module HabitOfFate.Data.Story (Order(..),Story(..)) where
 
+import Data.List.NonEmpty (NonEmpty)
 import Data.Text (Text)
 
 import HabitOfFate.Data.Content (Content)
@@ -65,6 +66,6 @@ data Story =
     }
   | Collection
     { order ∷ Order
-    , stories ∷ [Story]
+    , stories ∷ NonEmpty Story
     }
   deriving (Eq,Ord,Read,Show)
