@@ -1,0 +1,86 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE collection SYSTEM "story.dtd">
+<collection order="sequential">
+  <substitute placeholder="">
+    <candidate name="Andrea" gender="female" />
+  </substitute>
+  <substitute placeholder="Child">
+    <candidate name="Tommy" gender="male" />
+  </substitute>
+  <substitute placeholder="Plant">
+    <candidate name="Illsbane" gender="neuter" />
+  </substitute>
+  <substitute placeholder="WrongPlant">
+    <candidate name="Tigerlamp" gender="neuter" />
+  </substitute>
+  <narrative title="A Healer Enters the Woods">
+    <p>
+There were times when <b>|</b>, the village healer, cursed himself/herself| for deciding to become a healer, and this was one of them. Little <b>|Child</b> has brain fever, and the only way he/she|Child would survive the night is if he/she| could make a potion with <b>a |Plant</b> plant. Unfortunately, she is out of this herb, and the only way to get more of it is to search the Wicked Forest. He/she| considers telling the family that they would have to be the ones to do this, but his/her| conscience tells him/her| that it is his/her| duty, besides which they might not recognize it and pick the wrong plant. Also the gold helps.
+    </p>
+    <p>
+    He/she| enters the forest.
+    </p>
+  </narrative>
+  <collection order="random">
+    <narrative title="Wolves Howl">
+      <p>
+As | continues to search he/she| hears the howling of wolves, which makes him/her| shiver. Thank goodness they seem to be in the distance!
+      </p>
+    </narrative>
+    <event
+      title="The Gingerbread House"
+      question="Where do You guide |?"
+    >
+      <p>
+| sees a house made out of... gingerbread?  He/she| feels a strange compulsion to approach it.
+      </p>
+      <success
+        choice="Away from the gingerbread house."
+        title="Even Gingerbread Cannot Slow The Search"
+      >
+        <p>
+He/she| fights the compulsion, and continues on his/her| search.
+        </p>
+      </success>
+      <danger
+        choice="Towards the gingerbread house."
+        title="The Gingerbread Compulsion is Too Great"
+        question="How do you have | react?"
+      >
+        <p>
+As he/she| gets closer, the door opens and an old woman beckons him/her| in.  “You've arrived just in time!” she says. “Dinner has just finished cooking. Come on in!”
+        </p>
+      </danger>
+      <averted
+        choice="He/She| runs away!"
+        title="Escaping The Gingerbread House"
+      >
+        <p>
+The smell from the cottage is overwhelming, and shocks | to his/her| senses. He/she| sprints away from the cottage as fast as he/she| can.
+        </p>
+      </averted>
+      <failure
+        choice="He/She| enters the house."
+        title="Entering The Gingerbread House"
+      >
+        <p>
+Not knowing why he/she| was doing this, | enters the... cottage? The woman leads her to an oven. “Here, look inside.”
+        </p>
+        <p>
+| looks inside the oven and sees... little |Child? he/she| screams, and faints.
+        </p>
+        <p>
+Daylight awakens her. He/she| looks around, but the gingerbread house is nowhere to be found.
+        </p>
+        <p>
+He/she| sobs -- there is no way that he/she| will be able to make it home in time to save |Child now.  All of that gold will be lost!
+        </p>
+      </failure>
+    </event>
+    <narrative title="Candle Goes Out">
+      <p>
+|'s candle goes out; the resulting darkness is oppressive. Fortunately, he/she| had prepared for this. He/she| reached into his/her| pack and drew out flintstone, which he/she| uses to re-light the candle.
+      </p>
+    </narrative>
+  </collection>
+</collection>

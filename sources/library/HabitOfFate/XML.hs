@@ -41,6 +41,7 @@ import Data.Maybe (fromJust,isNothing)
 import qualified Data.Text as Text
 import Data.Text (Text,unpack)
 import Flow ((|>))
+import System.FilePath ((</>),isAbsolute)
 import qualified Text.Parsec as Parsec
 import Text.Parsec
   ( ParsecT
@@ -67,6 +68,8 @@ import HabitOfFate.Data.Story
 import HabitOfFate.Data.Substitutions
 import HabitOfFate.Operators ((⊕),(∈))
 import HabitOfFate.Substitution
+
+import Paths_habit_of_fate
 
 type XMLEvent = SAXEvent Text Text
 
@@ -378,7 +381,12 @@ parseCollection = withElement "collection" ["order"] $ \[order_text] → do
 runParserOnFile ∷ MonadIO m ⇒ FilePath → m (Either String Story)
 runParserOnFile filepath = liftIO $
   (
-    LB.readFile filepath
+    (if isAbsolute filepath
+      then pure filepath
+      else getDataFileName ("stories" </> filepath)
+    )
+    >>=
+    LB.readFile
     >>=
     (SAX.parseLocations SAX.defaultParseOptions >>> Parsec.runParserT (xmlDeclaration >> parseStory) HashSet.empty filepath)
   )

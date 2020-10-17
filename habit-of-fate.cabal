@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 6775c5544d42f4212cebb000bdd403860eb0e1db4812cf4169a697a8f2063fb6
+-- hash: 21c8dacee06027a8d218374f1ec161ec57fe357038614c4162d05058756e2d04
 
 name:           habit-of-fate
 version:        0.1.0.0
@@ -17,6 +17,10 @@ copyright:      2016 Gregory Crosswhite
 license:        AGPL-3
 license-file:   LICENSE
 build-type:     Simple
+data-files:
+    stories/forest.xml
+    stories/root.xml
+data-dir:       data
 
 source-repository head
   type: git
@@ -30,6 +34,7 @@ library
       HabitOfFate.Data.Story
       HabitOfFate.Data.Substitutions
       HabitOfFate.Operators
+      HabitOfFate.Story
       HabitOfFate.Substitution
       HabitOfFate.Testing
       HabitOfFate.Testing.Assertions
@@ -64,6 +69,19 @@ library
     , th-lift-instances
     , transformers
     , unordered-containers
+  default-language: Haskell2010
+
+test-suite test-story
+  type: exitcode-stdio-1.0
+  main-is: story.hs
+  other-modules:
+      Paths_habit_of_fate
+  hs-source-dirs:
+      sources/tests
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , habit-of-fate
   default-language: Haskell2010
 
 test-suite test-substitution

@@ -23,6 +23,11 @@ description:         Please see the README on GitHub at <https://github.com/gith
 dependencies:
 - base >= 4.7 && < 5
 
+data-dir: data
+data-files:
+  - stories/forest.xml
+  - stories/root.xml
+
 library:
   source-dirs: sources/library
   ghc-options:
@@ -71,6 +76,16 @@ library:
 #    - habit-of-fate
 
 tests:
+  test-story:
+    main:                story.hs
+    source-dirs:         sources/tests
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - habit-of-fate
+
   test-substitution:
     main:                substitution.hs
     source-dirs:         sources/tests

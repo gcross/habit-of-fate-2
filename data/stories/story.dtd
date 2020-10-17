@@ -1,0 +1,46 @@
+<!ELEMENT collection (substitute|narrative|event|branch|file|collection)+>
+<!ATTLIST  collection order (sequential|random) #REQUIRED>
+
+<!ELEMENT substitute (candidate+)>
+<!ATTLIST  substitute placeholder CDATA #REQUIRED>
+
+<!ELEMENT candidate EMPTY>
+<!ATTLIST  candidate name CDATA #REQUIRED>
+<!ATTLIST  candidate gender (male|female|neuter) #REQUIRED>
+
+<!ELEMENT narrative (p+)>
+<!ATTLIST  narrative title CDATA #REQUIRED>
+
+<!ELEMENT event (p+,success,danger,averted,failure)>
+<!ATTLIST  event title CDATA #REQUIRED>
+<!ATTLIST  event question CDATA #REQUIRED>
+
+<!ELEMENT success (p+)>
+<!ATTLIST  success choice CDATA #REQUIRED>
+<!ATTLIST  success title CDATA #REQUIRED>
+
+<!ELEMENT danger (p+)>
+<!ATTLIST  danger choice CDATA #REQUIRED>
+<!ATTLIST  danger title CDATA #REQUIRED>
+<!ATTLIST  danger question CDATA #REQUIRED>
+
+<!ELEMENT averted (p+)>
+<!ATTLIST  averted choice CDATA #REQUIRED>
+<!ATTLIST  averted title CDATA #REQUIRED>
+
+<!ELEMENT failure (p+)>
+<!ATTLIST  failure choice CDATA #REQUIRED>
+<!ATTLIST  failure title CDATA #REQUIRED>
+
+<!ELEMENT branch (p+,choice+)>
+<!ATTLIST  branch title CDATA #REQUIRED>
+<!ATTLIST  branch question CDATA #REQUIRED>
+
+<!ELEMENT choice (substitute|narrative|event|branch|file|collection)>
+<!ATTLIST  choice selection CDATA #REQUIRED>
+
+<!ELEMENT p (#PCDATA|b)*>
+<!ELEMENT b (#PCDATA)>
+
+<!ELEMENT file EMPTY>
+<!ATTLIST file path CDATA #REQUIRED>
