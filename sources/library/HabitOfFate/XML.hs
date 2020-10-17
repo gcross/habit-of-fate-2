@@ -150,11 +150,14 @@ endElement expected_tag = parseToken $
   >=>
   ((== expected_tag) >>> bool Nothing (Just ()))
 
+isWhitespace ∷ Char → Bool
+isWhitespace = (∈ (" \t\r\n" ∷ Text))
+
 whitespace ∷ Parser ()
 whitespace = parseToken $
   (^? _CharacterData)
   >=>
-  (Text.all (∈ (" \t\r\n" ∷ Text)) >>> bool Nothing (Just ()))
+  (Text.all isWhitespace >>> bool Nothing (Just ()))
 
 comment ∷ Parser ()
 comment = parseToken (is _Comment >>> bool Nothing (Just ()))
