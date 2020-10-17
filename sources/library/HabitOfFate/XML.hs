@@ -282,6 +282,8 @@ parseEvent = withElement "event" ["title","question"] $ \[event_title,event_ques
       <*> parseTextSubstitutions title
       <*> parseBodyContent
   skipWhitespaceAndComments
+  shames ← manyNonEmptyIgnoringSurroundingWhitespaceAndComments $
+    withElement "shame" [] $ \[] → parseContent
   pure $ Event {..}
 
 parseChoice ∷ Parser (Substitutions,Story)

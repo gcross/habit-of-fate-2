@@ -24,7 +24,7 @@ module HabitOfFate.Data.Story (Order(..),Story(..)) where
 import Data.List.NonEmpty (NonEmpty)
 import Data.Text (Text)
 
-import HabitOfFate.Data.Content (BodyContent)
+import HabitOfFate.Data.Content (BodyContent,Content)
 import HabitOfFate.Data.Gender (Gendered)
 import HabitOfFate.Data.Substitutions (Substitutions)
 
@@ -57,6 +57,7 @@ data Story =
     , failure_choice ∷ Substitutions
     , failure_title ∷ Substitutions
     , failure_content ∷ BodyContent
+    , shames ∷ NonEmpty Content
     }
   | Branch
     { title ∷ Substitutions

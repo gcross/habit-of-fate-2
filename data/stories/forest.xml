@@ -76,6 +76,8 @@ Daylight awakens her. He/she| looks around, but the gingerbread house is nowhere
 He/she| sobs -- there is no way that he/she| will be able to make it home in time to save |Child now.  All of that gold will be lost!
         </p>
       </failure>
+      <shame>You made the sweet smell of gingerbread be just too alluring for |.</shame>
+      <shame>You caused |Child to be completely forgotten as | was drawn into a gingerbread house.</shame>
     </event>
     <narrative title="Candle Goes Out">
       <p>

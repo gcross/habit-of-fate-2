@@ -11,7 +11,7 @@
 <!ELEMENT narrative (p+)>
 <!ATTLIST  narrative title CDATA #REQUIRED>
 
-<!ELEMENT event (p+,success,danger,averted,failure)>
+<!ELEMENT event (p+,success,danger,averted,failure,shame+)>
 <!ATTLIST  event title CDATA #REQUIRED>
 <!ATTLIST  event question CDATA #REQUIRED>
 
@@ -31,6 +31,8 @@
 <!ELEMENT failure (p+)>
 <!ATTLIST  failure choice CDATA #REQUIRED>
 <!ATTLIST  failure title CDATA #REQUIRED>
+
+<!ELEMENT shame (#PCDATA)>
 
 <!ELEMENT branch (p+,choice+)>
 <!ATTLIST  branch title CDATA #REQUIRED>

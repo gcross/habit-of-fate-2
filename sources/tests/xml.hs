@@ -64,7 +64,7 @@ main = doMain
         >>=
         (@?= Right (Narrative "stuff" "happens"))
     , testCase "event" $
-        runParserOnString "<event title=\"eve\" question=\"quest\"><p>common</p><success choice=\"right\" title=\"good\"><p>yay</p></success><danger choice=\"gamble\" title=\"possibly\" question=\"roll\"><p>feeling lucky</p></danger><averted choice=\"soso\" title=\"maybe\"><p>okay</p></averted><failure choice=\"wrong\" title=\"bad\"><p>no</p></failure></event>"
+        runParserOnString "<event title=\"eve\" question=\"quest\"><p>common</p><success choice=\"right\" title=\"good\"><p>yay</p></success><danger choice=\"gamble\" title=\"possibly\" question=\"roll\"><p>feeling lucky</p></danger><averted choice=\"soso\" title=\"maybe\"><p>okay</p></averted><failure choice=\"wrong\" title=\"bad\"><p>no</p></failure><shame>what a shame</shame></event>"
         >>=
         (@?= let common_title = "eve"
                  common_content = "common"
@@ -82,6 +82,7 @@ main = doMain
                  failure_choice = "wrong"
                  failure_title = "bad"
                  failure_content = "no"
+                 shames = "what a shame":|[]
              in Right (Event{..})
         )
     , testCase "branch" $
@@ -132,6 +133,9 @@ main = doMain
     <p>no<!-- comment --></p>
     <!-- comment -->
   </failure><!-- comment -->
+  <shame><!-- comment -->
+    it's a shame<!-- comment -->
+  </shame>
 </event>
 |]
         >>=
@@ -151,6 +155,7 @@ main = doMain
                  failure_choice = "wrong"
                  failure_title = "bad"
                  failure_content = "no"
+                 shames = "\n    it's a shame\n  ":|[]
              in Right (Event{..})
         )
     , testCase "branch/choice" $
