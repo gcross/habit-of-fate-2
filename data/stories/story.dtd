@@ -42,7 +42,7 @@
 <!ATTLIST  choice selection CDATA #REQUIRED>
 
 <!ELEMENT p (#PCDATA|b)*>
-<!ELEMENT b (#PCDATA)>
+<!ELEMENT  b (#PCDATA)>
 
 <!ELEMENT file EMPTY>
-<!ATTLIST file path CDATA #REQUIRED>
+<!ATTLIST  file path CDATA #REQUIRED>
