@@ -24,7 +24,7 @@ module HabitOfFate.Data.Story (Order(..),Story(..)) where
 import Data.List.NonEmpty (NonEmpty)
 import Data.Text (Text)
 
-import HabitOfFate.Data.Content (Content)
+import HabitOfFate.Data.Content (BodyContent)
 import HabitOfFate.Data.Gender (Gendered)
 import HabitOfFate.Data.Substitutions (Substitutions)
 
@@ -38,29 +38,29 @@ data Story =
     }
   | Narrative
     { title ∷ Substitutions
-    , content ∷ Content
+    , content ∷ BodyContent
     }
   | Event
     { common_title ∷ Substitutions
-    , common_content ∷ Content
+    , common_content ∷ BodyContent
     , common_question ∷ Substitutions
     , success_choice ∷ Substitutions
     , success_title ∷ Substitutions
-    , success_content ∷ Content
+    , success_content ∷ BodyContent
     , danger_choice ∷ Substitutions
     , danger_title ∷ Substitutions
-    , danger_content ∷ Content
+    , danger_content ∷ BodyContent
     , danger_question ∷ Substitutions
     , averted_choice ∷ Substitutions
     , averted_title ∷ Substitutions
-    , averted_content ∷ Content
+    , averted_content ∷ BodyContent
     , failure_choice ∷ Substitutions
     , failure_title ∷ Substitutions
-    , failure_content ∷ Content
+    , failure_content ∷ BodyContent
     }
   | Branch
     { title ∷ Substitutions
-    , content ∷ Content
+    , content ∷ BodyContent
     , question ∷ Substitutions
     , choices ∷ NonEmpty (Substitutions,Story)
     }

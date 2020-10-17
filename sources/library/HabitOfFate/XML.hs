@@ -233,12 +233,20 @@ parseTextSubstitutions text = do
 parseContentChunk ∷ Parser ContentChunk
 parseContentChunk =
       (Unformatted <$> (characterDataSkippingComments1 >>= parseTextSubstitutions))
-  <|> (Bold <$> withElement "b" [] (const parseBodyContent))
+  <|> (Bold <$> withElement "b" [] (const parseContent))
 
-parseBodyContent ∷ Parser Content
-parseBodyContent = do
+parseContent ∷ Parser Content
+parseContent = do
   optional skipComments
   sepEndBy1 parseContentChunk skipComments <&> Content
+
+parseParagraph ∷ Parser Content
+parseParagraph = withElement "p" [] $ \[] → parseContent
+
+parseBodyContent ∷ Parser BodyContent
+parseBodyContent = do
+  optional skipWhitespaceAndComments
+  sepEndBy1 parseParagraph skipWhitespaceAndComments <&> BodyContent
 
 parseNarrative ∷ Parser Story
 parseNarrative = withElement "narrative" ["title"] $ \[title] →
@@ -247,7 +255,7 @@ parseNarrative = withElement "narrative" ["title"] $ \[title] →
 data NonDangerElement = NonDangerElement
   { _nondanger_choice_ ∷ Substitutions
   , _nondanger_title_ ∷ Substitutions
-  , _nondanger_content_ ∷ Content
+  , _nondanger_content_ ∷ BodyContent
   }
 makeLenses ''NonDangerElement
 
@@ -261,7 +269,7 @@ parseNonDangerElement tag = withElement tag ["choice","title"] $ \[choice,title]
 data DangerElement = DangerElement
   { _danger_choice_ ∷ Substitutions
   , _danger_title_ ∷ Substitutions
-  , _danger_content_ ∷ Content
+  , _danger_content_ ∷ BodyContent
   , _danger_question_ ∷ Substitutions
   }
 makeLenses ''DangerElement

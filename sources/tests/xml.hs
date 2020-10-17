@@ -60,11 +60,11 @@ main = doMain
         >>=
         (@?= Right (Substitute "hole" (Gendered "Ander" Male:|[])))
     , testCase "narrative" $
-        runParserOnString "<narrative title=\"stuff\">happens</narrative>"
+        runParserOnString "<narrative title=\"stuff\"><p>happens</p></narrative>"
         >>=
         (@?= Right (Narrative "stuff" "happens"))
     , testCase "event" $
-        runParserOnString "<event title=\"eve\" question=\"quest\">common<success choice=\"right\" title=\"good\">yay</success><danger choice=\"gamble\" title=\"possibly\" question=\"roll\">feeling lucky</danger><averted choice=\"soso\" title=\"maybe\">okay</averted><failure choice=\"wrong\" title=\"bad\">no</failure></event>"
+        runParserOnString "<event title=\"eve\" question=\"quest\"><p>common</p><success choice=\"right\" title=\"good\"><p>yay</p></success><danger choice=\"gamble\" title=\"possibly\" question=\"roll\"><p>feeling lucky</p></danger><averted choice=\"soso\" title=\"maybe\"><p>okay</p></averted><failure choice=\"wrong\" title=\"bad\"><p>no</p></failure></event>"
         >>=
         (@?= let common_title = "eve"
                  common_content = "common"
@@ -85,14 +85,14 @@ main = doMain
              in Right (Event{..})
         )
     , testCase "branch" $
-        runParserOnString "<branch title=\"stuff\" question=\"why?\">story time<choice selection=\"because\"><narrative title=\"answer\">so it would seem</narrative></choice></branch>"
+        runParserOnString "<branch title=\"stuff\" question=\"why?\"><p>story time</p><choice selection=\"because\"><narrative title=\"answer\"><p>so it would seem</p></narrative></choice></branch>"
         >>=
         (@?= Right (Branch "stuff" "story time" "why?" (("because",Narrative "answer" "so it would seem"):|[])))
     , testCase "collection" $
-        runParserOnString "<collection order=\"random\"><narrative title=\"title\">content</narrative></collection>"
+        runParserOnString "<collection order=\"random\"><narrative title=\"title\"><p>content</p></narrative></collection>"
         >>=
         (@?= Right (Collection Random (Narrative "title" "content":|[])))
-    , testCase "file" $ withContentsInTemporaryFile "<narrative title=\"stuff\">happens</narrative>" $ \filepath →
+    , testCase "file" $ withContentsInTemporaryFile "<narrative title=\"stuff\"><p>happens</p></narrative>" $ \filepath →
         runParserOnString ("<file path=\"" ⊕ filepath ⊕ "\"/>")
         >>=
         (@?= Right (Narrative "stuff" "happens"))
@@ -108,63 +108,67 @@ main = doMain
         (@?= Right (Substitute "hole" (Gendered "Ander" Male:|[])))
     , testCase "narrative" $
         runParserOnString [i|
-<narrative title="stuff"><!-- comment -->happens<!-- comment --></narrative>
+<narrative title="stuff"><!-- comment --><p>happens</p><!-- comment --></narrative>
 |]
         >>=
         (@?= Right (Narrative "stuff" "happens"))
     , testCase "event" $
         runParserOnString [i|
 <event title="eve" question="quest"><!-- comment -->
-  common<!-- comment -->
+  <p>common</p><!-- comment -->
   <success choice="right" title="good"><!-- comment -->
-    yay<!-- comment -->
+    <p>yay<!-- comment --></p>
+    <!-- comment -->
   </success><!-- comment -->
   <danger choice="gamble" title="possibly" question="roll"><!-- comment -->
-    feeling lucky<!-- comment -->
+    <p>feeling lucky<!-- comment --></p>
+    <!-- comment -->
   </danger><!-- comment -->
   <averted choice="soso" title="maybe"><!-- comment -->
-    okay<!-- comment -->
+    <p>okay<!-- comment --></p>
+    <!-- comment -->
   </averted><!-- comment -->
   <failure choice="wrong" title="bad"><!-- comment -->
-    no<!-- comment -->
+    <p>no<!-- comment --></p>
+    <!-- comment -->
   </failure><!-- comment -->
 </event>
 |]
         >>=
         (@?= let common_title = "eve"
-                 common_content = "\n  common\n  "
+                 common_content = "common"
                  common_question = "quest"
                  success_choice = "right"
                  success_title = "good"
-                 success_content = "\n    yay\n  "
+                 success_content = "yay"
                  danger_choice = "gamble"
                  danger_title = "possibly"
-                 danger_content = "\n    feeling lucky\n  "
+                 danger_content = "feeling lucky"
                  danger_question = "roll"
                  averted_choice = "soso"
                  averted_title = "maybe"
-                 averted_content = "\n    okay\n  "
+                 averted_content = "okay"
                  failure_choice = "wrong"
                  failure_title = "bad"
-                 failure_content = "\n    no\n  "
+                 failure_content = "no"
              in Right (Event{..})
         )
     , testCase "branch/choice" $
         runParserOnString [i|
 <branch title="stuff" question="why?"><!-- comment -->
-  story time<!-- comment -->
+  <p>story time</p><!-- comment -->
   <choice selection="because"><!-- comment -->
-    <narrative title="answer">so it would seem<!-- comment --></narrative><!-- comment -->
+    <narrative title="answer"><p>so it would seem</p><!-- comment --></narrative><!-- comment -->
   </choice><!-- comment -->
 </branch>
 |]
         >>=
-        (@?= Right (Branch "stuff" "\n  story time\n  " "why?" (("because",Narrative "answer" "so it would seem"):|[])))
+        (@?= Right (Branch "stuff" "story time" "why?" (("because",Narrative "answer" "so it would seem"):|[])))
     , testCase "collection" $
         runParserOnString [i|
 <collection order="random"><!-- comment -->
-  <narrative title="title1">content1<!-- comment --></narrative><!-- comment -->
-  <narrative title="title2">content2<!-- comment --></narrative><!-- comment -->
+  <narrative title="title1"><p>content1</p><!-- comment --></narrative><!-- comment -->
+  <narrative title="title2"><p>content2</p><!-- comment --></narrative><!-- comment -->
 </collection>
 |]
         >>=
@@ -172,13 +176,21 @@ main = doMain
     ]
   , testGroup "content formatting"
     [ testCase "bold" $
-        runParserOnString "<narrative title=\"stuff\"><b>happens</b></narrative>"
+        runParserOnString "<narrative title=\"stuff\"><p><b>happens</b></p></narrative>"
         >>=
-        (@?= Right (Narrative "stuff" $ Content [Bold "happens"]))
+        (@?= Right (Narrative "stuff" $ BodyContent [Content [Bold "happens"]]))
     , testCase "mixed" $
-        runParserOnString "<narrative title=\"format\">regular<b>bold</b><b>BOLD</b>unbold</narrative>"
+        runParserOnString "<narrative title=\"format\"><p>regular<b>bold</b><b>BOLD</b>unbold</p></narrative>"
         >>=
-        (@?= Right (Narrative "format" $ Content ["regular", Bold "bold", Bold "BOLD", "unbold"]))
+        (@?= Right (Narrative "format" $ BodyContent [Content ["regular", Bold "bold", Bold "BOLD", "unbold"]]))
+    , testCase "multiple paragraphs" $
+        runParserOnString "<narrative title=\"stuff\"><p>1</p><p>2</p></narrative>"
+        >>=
+        (@?= Right (Narrative "stuff" $ BodyContent ["1","2"]))
+    , testCase "multiple paragraphs with one bold" $
+        runParserOnString "<narrative title=\"stuff\"><p><b>1</b></p><p>2</p></narrative>"
+        >>=
+        (@?= Right (Narrative "stuff" $ BodyContent [Content [Bold "1"],"2"]))
     ]
   , testGroup "substitutions"
     [ testCase "known placeholder" $
@@ -187,7 +199,7 @@ main = doMain
   <substitute placeholder="Name">
     <candidate name="Ander" gender="male"/>
   </substitute>
-  <narrative title="title1">|Name</narrative>
+  <narrative title="title1"><p>|Name</p></narrative>
 </collection>
 |]
         >>=
@@ -196,7 +208,7 @@ main = doMain
             (Substitute "Name" (Gendered "Ander" Male:|[])
             :|Narrative
               "title1"
-              (Content
+              (BodyContent [Content
                 [Unformatted
                   (Substitutions
                     [Substitution $ SubstitutionData
@@ -208,7 +220,7 @@ main = doMain
                     ]
                   )
                 ]
-              )
+              ])
             :[]
             )
           )

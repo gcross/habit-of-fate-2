@@ -16,7 +16,7 @@
 
 {-# LANGUAGE UnicodeSyntax #-}
 
-module HabitOfFate.Data.Content (Content(..),ContentChunk(..)) where
+module HabitOfFate.Data.Content (BodyContent(..),Content(..),ContentChunk(..)) where
 
 import Control.Category ((>>>))
 import Data.String (IsString(..))
@@ -34,3 +34,9 @@ newtype Content = Content { unwrapContent ∷ [ContentChunk] }
 
 instance IsString Content where
   fromString = fromString >>> (:[]) >>> Content
+
+newtype BodyContent = BodyContent { unwrapBodyContent ∷ [Content] }
+  deriving (Eq,Ord,Read,Show)
+
+instance IsString BodyContent where
+  fromString = fromString >>> (:[]) >>> BodyContent
