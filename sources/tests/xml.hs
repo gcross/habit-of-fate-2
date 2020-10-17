@@ -59,6 +59,10 @@ main = doMain
         runParserOnString "<substitute placeholder=\"hole\"><candidate name=\"Ander\" gender=\"male\"/></substitute>"
         >>=
         (@?= Right (Substitute "hole" (Gendered "Ander" Male:|[])))
+    , testCase "fame" $
+        runParserOnString "<fame>famous</fame>"
+        >>=
+        (@?= Right (Fame "famous"))
     , testCase "narrative" $
         runParserOnString "<narrative title=\"stuff\"><p>happens</p></narrative>"
         >>=
@@ -107,6 +111,12 @@ main = doMain
 |]
         >>=
         (@?= Right (Substitute "hole" (Gendered "Ander" Male:|[])))
+    , testCase "fame" $
+        runParserOnString [i|
+<fame><!-- comment -->all be praised<!-- comment --></fame>
+|]
+        >>=
+        (@?= Right (Fame "all be praised"))
     , testCase "narrative" $
         runParserOnString [i|
 <narrative title="stuff"><!-- comment --><p>happens</p><!-- comment --></narrative>

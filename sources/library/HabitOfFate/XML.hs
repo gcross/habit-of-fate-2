@@ -212,6 +212,9 @@ parseGendered ∷ Parser Gendered
 parseGendered = withElement "candidate" ["name","gender"] $ \[name,gender_string] →
   Gendered name <$> parseGender gender_string
 
+parseFame ∷ Parser Story
+parseFame = withElement "fame" [] $ \[] → parseContent <&> Fame
+
 parseSubstitute ∷ Parser Story
 parseSubstitute = withElement "substitute" ["placeholder"] $ \[placeholder] → do
   old_placeholders ← getState
@@ -342,6 +345,7 @@ parseFileElement = withElement "file" ["path"] $ \[path] →
 parseStory ∷ Parser Story
 parseStory = between skipWhitespaceAndComments skipWhitespaceAndComments $
       parseSubstitute
+  <|> parseFame
   <|> parseNarrative
   <|> parseEvent
   <|> parseBranch

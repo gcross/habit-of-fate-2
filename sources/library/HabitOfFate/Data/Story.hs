@@ -36,6 +36,9 @@ data Story =
     { placeholder ∷ Text
     , candidates ∷ NonEmpty Gendered
     }
+  | Fame
+    { text ∷ Content
+    }
   | Narrative
     { title ∷ Substitutions
     , content ∷ BodyContent
