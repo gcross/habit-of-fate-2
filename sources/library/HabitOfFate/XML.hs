@@ -26,7 +26,7 @@
 module HabitOfFate.XML (runParserOnFile) where
 
 import Control.Category ((>>>))
-import Control.Lens (Lens',Prism',(&),(^.),(^?),(<<?~),(<&>),makeLenses,prism')
+import Control.Lens (Prism',(^?),(<&>),prism')
 import Control.Lens.Extras (is)
 import Control.Monad ((>=>),forM_,unless,when)
 import Control.Monad.IO.Class (MonadIO(..))
@@ -37,7 +37,7 @@ import qualified Data.HashSet as HashSet
 import Data.HashSet (HashSet)
 import Data.List ((\\))
 import Data.List.NonEmpty (NonEmpty(..))
-import Data.Maybe (fromJust,isNothing)
+import Data.Maybe (fromJust)
 import qualified Data.Text as Text
 import Data.Text (Text,unpack)
 import Flow ((|>))
@@ -56,7 +56,6 @@ import Text.Parsec
   , setSourceColumn
   , setSourceLine
   , skipMany
-  , skipMany1
   , tokenPrim
   )
 import qualified Text.XML.Expat.SAX as SAX
@@ -171,9 +170,6 @@ skipComments = skipMany comment
 skipWhitespaceAndComments ∷ Parser ()
 skipWhitespaceAndComments = skipMany (whitespace <|> comment)
 
-skipWhitespaceAndComments1 ∷ Parser ()
-skipWhitespaceAndComments1 = skipMany1 (whitespace <|> comment)
-
 manyNonEmptyIgnoringSurroundingWhitespaceAndComments ∷ Parser α → Parser (NonEmpty α)
 manyNonEmptyIgnoringSurroundingWhitespaceAndComments p = do
   optional skipWhitespaceAndComments
@@ -255,99 +251,37 @@ parseNarrative ∷ Parser Story
 parseNarrative = withElement "narrative" ["title"] $ \[title] →
   Narrative <$> parseTextSubstitutions title <*> parseBodyContent
 
-data NonDangerElement = NonDangerElement
-  { _nondanger_choice_ ∷ Substitutions
-  , _nondanger_title_ ∷ Substitutions
-  , _nondanger_content_ ∷ BodyContent
-  }
-makeLenses ''NonDangerElement
-
-parseNonDangerElement ∷ Text → Parser NonDangerElement
-parseNonDangerElement tag = withElement tag ["choice","title"] $ \[choice,title] → do
-  _nondanger_choice_ ← parseTextSubstitutions choice
-  _nondanger_title_ ← parseTextSubstitutions title
-  _nondanger_content_ ← parseBodyContent
-  pure $ NonDangerElement{..}
-
-data DangerElement = DangerElement
-  { _danger_choice_ ∷ Substitutions
-  , _danger_title_ ∷ Substitutions
-  , _danger_content_ ∷ BodyContent
-  , _danger_question_ ∷ Substitutions
-  }
-makeLenses ''DangerElement
-
-parseDangerElement ∷ Parser DangerElement
-parseDangerElement = withElement "danger" ["choice","title","question"] $ \[choice,title,question] → do
-  _danger_choice_ ← parseTextSubstitutions choice
-  _danger_title_ ← parseTextSubstitutions title
-  _danger_content_ ← parseBodyContent
-  _danger_question_ ← parseTextSubstitutions question
-  pure $ DangerElement{..}
-
-data EventParseState = EventParseState
-  { _success_element_ ∷ Maybe NonDangerElement
-  , _danger_element_ ∷ Maybe DangerElement
-  , _averted_element_ ∷ Maybe NonDangerElement
-  , _failure_element_ ∷ Maybe NonDangerElement
-  }
-makeLenses ''EventParseState
-
-updateElement ∷ Text → Lens' EventParseState (Maybe α) → Parser α → EventParseState → Parser EventParseState
-updateElement element_name element_ parseNewValue old_event_parse_state = do
-  new_value ← parseNewValue
-  let (maybe_old_value,new_state) = old_event_parse_state & element_ <<?~ new_value
-  unless (isNothing maybe_old_value) $ fail $ "more than one " ⊕ unpack element_name ⊕ " element found"
-  pure new_state
-
 parseEvent ∷ Parser Story
-parseEvent = do
-  [title,question] ← startElementWithAttributes "event" ["title","question"]
-  common_title ← parseTextSubstitutions title
+parseEvent = withElement "event" ["title","question"] $ \[event_title,event_question] → do
+  common_title ← parseTextSubstitutions event_title
+  common_question ← parseTextSubstitutions event_question
   common_content ← parseBodyContent
-  common_question ← parseTextSubstitutions question
-  let go ∷ EventParseState → Parser EventParseState
-      go old_event_parse_state =
-              parseAndUpdateNonDangerElement "success" success_element_
-          <|> parseAndUpdateNonDangerElement "averted" averted_element_
-          <|> parseAndUpdateNonDangerElement "failure" failure_element_
-          <|> (updateElement "danger" danger_element_ parseDangerElement old_event_parse_state >>= go)
-          <|> (skipWhitespaceAndComments1 >> go old_event_parse_state)
-          <|> (endElement "event" >> pure old_event_parse_state)
-          where
-           parseAndUpdateNonDangerElement ∷
-             Text →
-             Lens' EventParseState (Maybe NonDangerElement) →
-             Parser EventParseState
-           parseAndUpdateNonDangerElement name element_ =
-             updateElement name element_ (parseNonDangerElement name) old_event_parse_state >>= go
-  final_event_parse_state ← go $ EventParseState Nothing Nothing Nothing Nothing
-  let checkForNonDangerElement ∷
-        String →
-        Lens' EventParseState (Maybe NonDangerElement) →
-        Parser NonDangerElement
-      checkForNonDangerElement element_name element_ =
-        final_event_parse_state |> (^. element_) |> maybe (fail $ "no " ⊕ element_name ⊕ " element") pure
-  success_element ← checkForNonDangerElement "success" success_element_
-  averted_element ← checkForNonDangerElement "averted" averted_element_
-  failure_element ← checkForNonDangerElement "failure" failure_element_
-  danger_element  ← final_event_parse_state |> (^. danger_element_) |> maybe (fail $ "no danger element") pure
-  let success_choice  = success_element ^. nondanger_choice_
-      success_title   = success_element ^. nondanger_title_
-      success_content = success_element ^. nondanger_content_
-
-      averted_choice  = averted_element ^. nondanger_choice_
-      averted_title   = averted_element ^. nondanger_title_
-      averted_content = averted_element ^. nondanger_content_
-
-      failure_choice  = failure_element ^. nondanger_choice_
-      failure_title   = failure_element ^. nondanger_title_
-      failure_content = failure_element ^. nondanger_content_
-
-      danger_choice   = danger_element  ^. danger_choice_
-      danger_title    = danger_element  ^. danger_title_
-      danger_content  = danger_element  ^. danger_content_
-      danger_question = danger_element  ^. danger_question_
+  skipWhitespaceAndComments
+  (success_choice,success_title,success_content) ←
+    withElement "success" ["choice","title"] $ \[choice,title] → (,,)
+      <$> parseTextSubstitutions choice
+      <*> parseTextSubstitutions title
+      <*> parseBodyContent
+  skipWhitespaceAndComments
+  (danger_choice,danger_title,danger_question,danger_content) ←
+    withElement "danger" ["choice","title","question"] $ \[choice,title,question] → (,,,)
+      <$> parseTextSubstitutions choice
+      <*> parseTextSubstitutions title
+      <*> parseTextSubstitutions question
+      <*> parseBodyContent
+  skipWhitespaceAndComments
+  (averted_choice,averted_title,averted_content) ←
+    withElement "averted" ["choice","title"] $ \[choice,title] → (,,)
+      <$> parseTextSubstitutions choice
+      <*> parseTextSubstitutions title
+      <*> parseBodyContent
+  skipWhitespaceAndComments
+  (failure_choice,failure_title,failure_content) ←
+    withElement "failure" ["choice","title"] $ \[choice,title] → (,,)
+      <$> parseTextSubstitutions choice
+      <*> parseTextSubstitutions title
+      <*> parseBodyContent
+  skipWhitespaceAndComments
   pure $ Event {..}
 
 parseChoice ∷ Parser (Substitutions,Story)
