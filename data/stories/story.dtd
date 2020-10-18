@@ -1,8 +1,7 @@
-<!ELEMENT collection (substitute|narrative|event|branch|file|collection)+>
-<!ATTLIST  collection order (sequential|random) #REQUIRED>
-
 <!ELEMENT substitute (candidate+)>
 <!ATTLIST  substitute placeholder CDATA #REQUIRED>
+
+<!ELEMENT fame (#PCDATA)>
 
 <!ELEMENT candidate EMPTY>
 <!ATTLIST  candidate name CDATA #REQUIRED>
@@ -38,8 +37,12 @@
 <!ATTLIST  branch title CDATA #REQUIRED>
 <!ATTLIST  branch question CDATA #REQUIRED>
 
-<!ELEMENT choice (substitute|narrative|event|branch|file|collection)>
+<!ELEMENT choice (substitute|narrative|event|branch|random|sequence|file)>
 <!ATTLIST  choice selection CDATA #REQUIRED>
+
+<!ELEMENT random (narrative|event|branch|random|sequence|file)+>
+
+<!ELEMENT sequence (substitute*,fame*,(narrative|event|branch|random|sequence|file)+)>
 
 <!ELEMENT p (#PCDATA|b)*>
 <!ELEMENT  b (#PCDATA)>

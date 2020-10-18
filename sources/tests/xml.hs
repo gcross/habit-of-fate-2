@@ -14,6 +14,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -}
 
+{-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE RecordWildCards #-}
@@ -24,7 +25,6 @@ module Main where
 import Control.Lens (_Left)
 import Control.Lens.Extras (is)
 import Data.CallStack (HasCallStack)
-import Data.List.NonEmpty (NonEmpty(..))
 import Data.String.Interpolate (i)
 import System.FilePath (FilePath)
 import System.IO (hClose,hFlush,hPutStr,hPutStrLn,hSetEncoding,utf8)
@@ -55,15 +55,7 @@ runParserOnString = flip withContentsInTemporaryFile runParserOnFile
 main ∷ HasCallStack ⇒ IO ()
 main = doMain
   [ testGroup "singleton tags"
-    [ testCase "substitute" $
-        runParserOnString "<substitute placeholder=\"hole\"><candidate name=\"Ander\" gender=\"male\"/></substitute>"
-        >>=
-        (@?= Right (Substitute "hole" (Gendered "Ander" Male:|[])))
-    , testCase "fame" $
-        runParserOnString "<fame>famous</fame>"
-        >>=
-        (@?= Right (Fame "famous"))
-    , testCase "narrative" $
+    [ testCase "narrative" $
         runParserOnString "<narrative title=\"stuff\"><p>happens</p></narrative>"
         >>=
         (@?= Right (Narrative "stuff" "happens"))
@@ -86,44 +78,28 @@ main = doMain
                  failure_choice = "wrong"
                  failure_title = "bad"
                  failure_content = "no"
-                 shames = "what a shame":|[]
+                 shames = ["what a shame"]
              in Right (Event{..})
         )
     , testCase "branch" $
         runParserOnString "<branch title=\"stuff\" question=\"why?\"><p>story time</p><choice selection=\"because\"><narrative title=\"answer\"><p>so it would seem</p></narrative></choice></branch>"
         >>=
-        (@?= Right (Branch "stuff" "story time" "why?" (("because",Narrative "answer" "so it would seem"):|[])))
-    , testCase "collection" $
-        runParserOnString "<collection order=\"random\"><narrative title=\"title\"><p>content</p></narrative></collection>"
+        (@?= Right (Branch "stuff" "story time" "why?" [("because",Narrative "answer" "so it would seem")]))
+    , testCase "random" $
+        runParserOnString "<random><narrative title=\"title\"><p>content</p></narrative></random>"
         >>=
-        (@?= Right (Collection Random (Narrative "title" "content":|[])))
+        (@?= Right (Random [Narrative "title" "content"]))
+    , testCase "sequence with substitute and fame" $
+        runParserOnString "<sequence><substitute placeholder=\"hole\"><candidate name=\"Ander\" gender=\"male\"/></substitute><fame>famous</fame><narrative title=\"title\"><p>content</p></narrative></sequence>"
+        >>=
+        (@?= Right (Sequence [Substitute "hole" [Gendered "Ander" Male]] ["famous"] [Narrative "title" "content"]))
     , testCase "file" $ withContentsInTemporaryFile "<narrative title=\"stuff\"><p>happens</p></narrative>" $ \filepath →
         runParserOnString ("<file path=\"" ⊕ filepath ⊕ "\"/>")
         >>=
         (@?= Right (Narrative "stuff" "happens"))
     ]
   , testGroup "whitespace and comments ignored when appropriate"
-    [ testCase "substitute/candidate" $
-        runParserOnString [i|
-<substitute placeholder="hole"><!-- comment -->
-  <candidate name="Ander" gender="male"/><!-- comment -->
-</substitute>
-|]
-        >>=
-        (@?= Right (Substitute "hole" (Gendered "Ander" Male:|[])))
-    , testCase "fame" $
-        runParserOnString [i|
-<fame><!-- comment -->all be praised<!-- comment --></fame>
-|]
-        >>=
-        (@?= Right (Fame "all be praised"))
-    , testCase "narrative" $
-        runParserOnString [i|
-<narrative title="stuff"><!-- comment --><p>happens</p><!-- comment --></narrative>
-|]
-        >>=
-        (@?= Right (Narrative "stuff" "happens"))
-    , testCase "event" $
+    [ testCase "event" $
         runParserOnString [i|
 <event title="eve" question="quest"><!-- comment -->
   <p>common</p><!-- comment -->
@@ -165,7 +141,7 @@ main = doMain
                  failure_choice = "wrong"
                  failure_title = "bad"
                  failure_content = "no"
-                 shames = "\n    it's a shame\n  ":|[]
+                 shames = ["\n    it's a shame\n  "]
              in Right (Event{..})
         )
     , testCase "branch/choice" $
@@ -178,16 +154,37 @@ main = doMain
 </branch>
 |]
         >>=
-        (@?= Right (Branch "stuff" "story time" "why?" (("because",Narrative "answer" "so it would seem"):|[])))
-    , testCase "collection" $
+        (@?= Right (Branch "stuff" "story time" "why?" [("because",Narrative "answer" "so it would seem")]))
+    , testCase "random" $
         runParserOnString [i|
-<collection order="random"><!-- comment -->
+<random><!-- comment -->
   <narrative title="title1"><p>content1</p><!-- comment --></narrative><!-- comment -->
   <narrative title="title2"><p>content2</p><!-- comment --></narrative><!-- comment -->
-</collection>
+</random>
 |]
         >>=
-        (@?= Right (Collection Random (Narrative "title1" "content1":|Narrative "title2" "content2":[])))
+        (@?= Right (Random [Narrative "title1" "content1",Narrative "title2" "content2"]))
+    , testCase "sequence" $
+        runParserOnString [i|
+<sequence><!-- comment -->
+  <narrative title="title1"><p>content1</p><!-- comment --></narrative><!-- comment -->
+  <narrative title="title2"><p>content2</p><!-- comment --></narrative><!-- comment -->
+</sequence>
+|]
+        >>=
+        (@?= Right (Sequence [] [] [Narrative "title1" "content1",Narrative "title2" "content2"]))
+    , testCase "sequence with substitute/candidate and fame" $
+        runParserOnString [i|
+<sequence><!-- comment -->
+<substitute placeholder="hole"><!-- comment -->
+  <candidate name="Ander" gender="male"/><!-- comment -->
+</substitute>
+<fame><!-- comment -->all be praised<!-- comment --></fame>
+<narrative title="stuff"><!-- comment --><p>happens</p><!-- comment --></narrative>
+</sequence>
+|]
+        >>=
+        (@?= Right (Sequence [Substitute "hole" [Gendered "Ander" Male]] ["all be praised"] [Narrative "stuff" "happens"]))
     ]
   , testGroup "content formatting"
     [ testCase "bold" $
@@ -210,18 +207,19 @@ main = doMain
   , testGroup "substitutions"
     [ testCase "known placeholder" $
         runParserOnString [i|
-<collection order="sequential">
+<sequence>
   <substitute placeholder="Name">
     <candidate name="Ander" gender="male"/>
   </substitute>
   <narrative title="title1"><p>|Name</p></narrative>
-</collection>
+</sequence>
 |]
         >>=
         (@?= Right
-          (Collection Sequential
-            (Substitute "Name" (Gendered "Ander" Male:|[])
-            :|Narrative
+          (Sequence
+            [Substitute "Name" [Gendered "Ander" Male]]
+            []
+            [Narrative
               "title1"
               (BodyContent [Content
                 [Unformatted
@@ -236,8 +234,7 @@ main = doMain
                   )
                 ]
               ])
-            :[]
-            )
+            ]
           )
         )
     , testCase "unknown placeholder" $

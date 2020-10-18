@@ -27,7 +27,7 @@ import Data.Text (Text,unpack)
 import System.FilePath ((</>))
 
 import HabitOfFate.Data.Gender (Gender(..),Gendered(..))
-import HabitOfFate.Data.Story (Order(..),Story(..))
+import HabitOfFate.Data.Story (Story(..))
 import HabitOfFate.Data.Substitutions (SubstitutionChunk(..),Substitutions(..))
 import HabitOfFate.Operators ((⊕))
 import HabitOfFate.Substitution (substitute)
@@ -49,7 +49,6 @@ pathsWithoutFame = (:[]) >>> go ""
     mconcat
 
   go ∷ Text → [Story] → [Text]
-  go _ (Fame{..}:_) = mempty
   go path (Branch{..}:rest) =
     (traverse
       (\(selection,choice) → go (path ⊕ "/" ⊕ pathFromSubstitutions selection) (choice:[]))
@@ -57,10 +56,12 @@ pathsWithoutFame = (:[]) >>> go ""
     )
     >>=
     (mconcat >>> flip go rest)
-  go path (Collection{..}:rest) | order == Sequential =
-    go path (NonEmpty.toList stories)
-    >>=
-    flip go rest
+  go path (Sequence{..}:rest)
+    | null fames =
+        go path (NonEmpty.toList stories)
+        >>=
+        flip go rest
+    | otherwise = mempty
   go path [] = pure path
   go path (_:rest) = go path rest
 

@@ -19,7 +19,7 @@
 {-# LANGUAGE DisambiguateRecordFields #-}
 {-# LANGUAGE UnicodeSyntax #-}
 
-module HabitOfFate.Data.Story (Order(..),Story(..)) where
+module HabitOfFate.Data.Story (Story(..),Substitute(..)) where
 
 import Data.List.NonEmpty (NonEmpty)
 import Data.Text (Text)
@@ -28,18 +28,14 @@ import HabitOfFate.Data.Content (BodyContent,Content)
 import HabitOfFate.Data.Gender (Gendered)
 import HabitOfFate.Data.Substitutions (Substitutions)
 
-data Order = Sequential | Random
-  deriving (Bounded,Enum,Eq,Ord,Read,Show)
+data Substitute = Substitute
+  { placeholder ∷ Text
+  , candidates ∷ NonEmpty Gendered
+  }
+  deriving (Eq,Ord,Read,Show)
 
 data Story =
-    Substitute
-    { placeholder ∷ Text
-    , candidates ∷ NonEmpty Gendered
-    }
-  | Fame
-    { text ∷ Content
-    }
-  | Narrative
+    Narrative
     { title ∷ Substitutions
     , content ∷ BodyContent
     }
@@ -68,8 +64,12 @@ data Story =
     , question ∷ Substitutions
     , choices ∷ NonEmpty (Substitutions,Story)
     }
-  | Collection
-    { order ∷ Order
+  | Random
+    { stories ∷ NonEmpty Story
+    }
+  | Sequence
+    { substitutes ∷ [Substitute]
+    , fames ∷ [Content]
     , stories ∷ NonEmpty Story
     }
   deriving (Eq,Ord,Read,Show)

@@ -28,7 +28,7 @@ module HabitOfFate.XML (runParserOnFile) where
 import Control.Category ((>>>))
 import Control.Lens (Prism',(^?),(<&>),prism')
 import Control.Lens.Extras (is)
-import Control.Monad ((>=>),forM_,unless,when)
+import Control.Monad ((>=>),forM_,unless)
 import Control.Monad.IO.Class (MonadIO(..))
 import Data.Bifunctor (first)
 import Data.Bool (bool)
@@ -50,7 +50,6 @@ import Text.Parsec
   , getState
   , optional
   , putState
-  , sepBy
   , sepEndBy
   , sepEndBy1
   , setSourceColumn
@@ -63,6 +62,7 @@ import Text.XML.Expat.SAX (SAXEvent(..),XMLParseLocation(..))
 
 import HabitOfFate.Data.Content
 import HabitOfFate.Data.Gender
+import qualified HabitOfFate.Data.Story as Story
 import HabitOfFate.Data.Story
 import HabitOfFate.Data.Substitutions
 import HabitOfFate.Operators ((⊕),(∈))
@@ -98,14 +98,6 @@ _Comment = prism'
   (\case {Comment a → Just a; _ → Nothing})
 
 type Parser = ParsecT [(XMLEvent,XMLParseLocation)] (HashSet Text) IO
-
-sepByNonEmpty ∷ Parser α → Parser sep → Parser (NonEmpty α)
-sepByNonEmpty p psep =
-  sepBy p psep
-  >>=
-  \case
-    (x:xs) → pure (x:|xs)
-    [] → fail "at least one element required"
 
 sepEndByNonEmpty ∷ Parser α → Parser sep → Parser (NonEmpty α)
 sepEndByNonEmpty p psep =
@@ -212,16 +204,12 @@ parseGendered ∷ Parser Gendered
 parseGendered = withElement "candidate" ["name","gender"] $ \[name,gender_string] →
   Gendered name <$> parseGender gender_string
 
-parseFame ∷ Parser Story
-parseFame = withElement "fame" [] $ \[] → parseContent <&> Fame
-
-parseSubstitute ∷ Parser Story
+parseSubstitute ∷ Parser Substitute
 parseSubstitute = withElement "substitute" ["placeholder"] $ \[placeholder] → do
-  old_placeholders ← getState
-  when (HashSet.member placeholder old_placeholders) $
-    fail $ "a substitution already exists for " ⊕ unpack placeholder
-  putState $ HashSet.insert placeholder old_placeholders
   Substitute placeholder <$> manyNonEmptyIgnoringSurroundingWhitespaceAndComments parseGendered
+
+parseFame ∷ Parser Content
+parseFame = withElement "fame" [] $ \[] → parseContent
 
 parseTextSubstitutions ∷ Text → Parser Substitutions
 parseTextSubstitutions text = do
@@ -301,21 +289,28 @@ parseBranch = withElement "branch" ["title","question"] $ \[title_text,question_
   choices ← sepEndByNonEmpty parseChoice skipWhitespaceAndComments
   pure $ Branch {..}
 
-parseOrderAttribute ∷ Text → Parser Order
-parseOrderAttribute "sequential" = pure Sequential
-parseOrderAttribute "random" = pure Random
-parseOrderAttribute _ = fail "bad ordering specified"
-
-parseCollection ∷ Parser Story
-parseCollection = withElement "collection" ["order"] $ \[order_text] → do
-  old_placeholders ← getState
+parseRandom ∷ Parser Story
+parseRandom = withElement "random" [] $ \[] → do
   optional skipWhitespaceAndComments
-  collection ←
-    Collection
-      <$> parseOrderAttribute order_text
-      <*> sepByNonEmpty parseStory skipWhitespaceAndComments
+  Random <$> sepEndByNonEmpty parseStory skipWhitespaceAndComments
+
+parseSequence ∷ Parser Story
+parseSequence = withElement "sequence" [] $ \[] → do
+  skipWhitespaceAndComments
+  substitutes ← sepEndBy parseSubstitute skipWhitespaceAndComments
+  old_placeholders ← getState
+  let placeholders = map Story.placeholder substitutes
+      placeholders_as_set = HashSet.fromList placeholders
+  unless (HashSet.size placeholders_as_set == length placeholders) $
+    fail $ "Duplicate placeholders in " ⊕ (placeholders |> map unpack |> show)
+  let conflicting_placeholders = HashSet.intersection placeholders_as_set old_placeholders
+  unless (HashSet.null conflicting_placeholders) $
+    fail $ "Conflicting placeholders " ⊕ (conflicting_placeholders |> HashSet.toList |> map unpack |> show)
+  putState $ old_placeholders ⊕ placeholders_as_set
+  fames ← sepEndBy parseFame skipWhitespaceAndComments
+  stories ← sepEndByNonEmpty parseStory skipWhitespaceAndComments
   putState old_placeholders
-  pure collection
+  pure $ Sequence{..}
 
 runParserOnFile ∷ MonadIO m ⇒ FilePath → m (Either String Story)
 runParserOnFile filepath = liftIO $
@@ -344,11 +339,9 @@ parseFileElement = withElement "file" ["path"] $ \[path] →
 
 parseStory ∷ Parser Story
 parseStory = between skipWhitespaceAndComments skipWhitespaceAndComments $
-      parseSubstitute
-  <|> parseFame
-  <|> parseNarrative
+      parseNarrative
   <|> parseEvent
   <|> parseBranch
-  <|> parseCollection
+  <|> parseRandom
+  <|> parseSequence
   <|> parseFileElement
-
