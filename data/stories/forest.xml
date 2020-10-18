@@ -92,6 +92,51 @@ He/she| sobs -- there is no way that he/she| will be able to make it home in tim
 slowly as his/her| shadow gets further and further away from him/her|.  He/she| decides to start searching in a different direction.
       </p>
     </narrative>
+    <event
+      title="The Mushroom Circle"
+      question="Does she see it in time?"
+    >
+      <p>
+A mushroom circle lies just along |'s path, but he/she| is so busy looking for a |Plant plant that he/she| walks straight towards it.
+      </p>
+      <success
+        choice="Yes."
+        title="Mushroom Circle Averted"
+      >
+        <p>
+Fortunately, | sees it just before stepping inside. After a moment of letting his/her| heart calm down, he/she| says a prayer of thanks to you and resumes searching in a different direction.
+        </p>
+      </success>
+      <danger
+        choice="No."
+        title="| Steps Inside"
+        question="Does she make it out in time?"
+      >
+        <p>
+Unfortunately, by the time | notices it she was already inside. Desperately, he/she| turns around and starts to run out of it.
+        </p>
+      </danger>
+      <averted
+        choice="Yes."
+        title="Escaping The Fairy Ring"
+      >
+        <p>
+Miraculously, he/she| makes it out. He/she| continues the search.
+        </p>
+      </averted>
+      <failure
+        choice="No."
+        title="Traped in the Fairy Circle"
+      >
+        <p>
+Unfortunately, he/she| sees a leprechaun between him/her| and the mushroom border. “Welcome, mortal!” it says to him/her| cheerfully. “I am sure you will have a wonderful time in our land.”
+        </p>
+        <p>
+His/her| time in the fairy world feels like a dream; when it is all over, he/she| can hardly remember what it had been like. He/she| finds himself/herself| standing in the forest in the bright light of day, with mushrooms nowhere to be seen. He/she| runs back to the village, but it is no longer there--at least, as she remembered it. The houses are not in the same place and were larger, the dirt roads are now covered with some black material and have strange shiny creatures on them, and branchless trees are everywhere with black rope strung between them for unknown reasons. He/she| has no idea how much time he/she| had spent away from the world, but she knew that |Child, as well as everyone else he/she| had known and loved, was certainly dead.
+        </p>
+      </failure>
+      <shame>| was teleported by You to a distant realm through the enigmatic magic of the fairies, and there was no way to make it back in time to save |Child.</shame>
+    </event>
   </random>
   <branch
     title="Some Help Arrives?"
@@ -218,4 +263,101 @@ Suddenly the run ends with | slamming into a tree. She falls to the ground. Afte
       </event>
     </choice>
   </branch>
+  <random>
+    <narrative title="Full Moon">
+      <p>
+| looks up at the Moon. For reasons that nobody understands, the Moon is
+always full in the Wicked Forest. The good news is that this makes it easier to
+search for |Plant, but the bad news is that he/she| has to worry about
+werewolves...
+      </p>
+    </narrative>
+    <narrative title="Talking Tree">
+      <p>
+“Hello, human. It isn't often that I get to see one of your kind here.”
+      </p>
+      <p>
+| jumps and looks around for the source of the voice. He/she| hears it laugh. “You are just as stupid as the rest of your kind. Look, I am over here.”
+      </p>
+      <p>
+| finally realizes that the voice was coming from the tree right next to him/her|.
+      </p>
+      <p>
+“Why are you here?” it asks. | replies, “I am looking for a |Plant plant. I down't suppose you have seen one?” It laughs. “Do I look like I have legs?” | replies, “Umm, no, I guess not; I guess I'll just be going on my way then...”
+      </p>
+      <p>
+| resumes searching, the laugher of the tree receding as he/she| leaves it behind.
+      </p>
+    </narrative>
+  </random>
+  <event
+    title="Finally Back Home!"
+    question="Is there anything strange about the town?"
+  >
+    <p>
+| is starting to feel like he/she| will never make it back in time when he/she| sees the shapes of the huts of her village not far in the distance.
+    </p>
+    <success
+      choice="Nope, everything is fine."
+      title="Victory!"
+    >
+      <p>
+Not long after arriving, he/she| makes it back to his/her| hut and immediately starts brewing medicine for |Child. He/she| takes it to the family’s hut and gives it to them to administer to |Child. It is true that he/she| had just risked life and limb to save a single person, but he/she| considers it to be well worth it. Also they pay her a bonus.
+      </p>
+      <p>
+He/she| returns to his/her| own hut and does not even have enough energy to make it to the bed; she falls asleep on the floor, though with a smile on his/her| face. The next day, he/she| builds an altar to You out of gratitude.
+      </p>
+    </success>
+    <danger
+      choice="Yes, come to think of it..."
+      title="Something Is Odd Here"
+      question="Where will you guide him/her|?"
+    >
+      <p>
+He/she starts to breathe a sigh of relief when he/she| realizes that something is off that he/she| cannot quite place. As he/she| got closer, he/she| realizes that the doors to the huts are all facing him/her|, and that they seem to always be facing him/her| no matter how close he/she| gets to the village. Have they always been that way? Or is something strange going on?
+      </p>
+    </danger>
+    <averted
+      choice="Away from the village."
+      title="Keeping a Safe Distance"
+    >
+      <p>
+When in or close to the Wicked Forest, it is best to trust one’s instincts. Thus, even though it was the last thing that | wanted to do, he/she| turns around and walks back into the forest.
+      </p>
+      <p>
+After wandering for another hour, he/she| again sees huts, but this time he/she| does not get the same feeling of wrongness so he/she| cautiously approaches them. Again, nothing seems amiss so he/she| enters the village and heads towards his/her| hut. He/she| immediately starts brewing medicine for |Child and then takes it to the family’s hut and gives it to them to administer to |Child. It is true that he/she| had just risked life and limb to save a single person, but he/she| considers it to be well worth it. Also they pay him/her| a bonus.
+      </p>
+      <p>
+He/she| returns to his/her| own hut and does not even have enough energy to make it to the bed; he/she| falls asleep on the floor, though with a smile on his/her| face. The next day, he/she| builds an altar to you out of gratitude.
+      </p>
+    </averted>
+    <failure
+      choice="Towards the village."
+      title="There Is No Time to Wait"
+    >
+      <p>
+He/she| dismisses the notion; it had been a long night and the most likely explanation was that his/her| mind was going after his/her| long search in the Wicked Forest. Besides which, most importantly, he/she| needs to prepare the medication for |Child as quickly as possible. He/she| heads quickly to his/her| hut and opens the door. To His/her| shock, he/she| sees himself/herself| inside--but it wasn’t quite him/her|. After a moment, he/she| realizes what was wrong: the thing inside is flat, as if it were made of paper. Both | and the thing say simultaneously, “What are you?”
+      </p>
+      <p>
+| yelps in pain. He/she| looks down at his/her| arms and sees that they are getting flatter. The thing smiles, “I guess you are one of us now.” | notices that he/she| can see straight through the thing's own mouth whenever it opens.
+      </p>
+      <p>
+Well, maybe in this strange world he/she| could at least do some good. He/she| asks, “How is |Child?”
+      </p>
+      <p>
+The thing frowns. “Who is |Child?”
+      </p>
+      <p>
+| starts to weep in pain and anguish but as his/her| head flattens the tears are unable to push themselves out of his/her| tear ducts.
+      </p>
+      <p>
+“Don’t worry,” says the thing. “You will be safe here, with us.
+      </p>
+      <p>
+Forever."
+      </p>
+    </failure>
+    <shame>You caused |'s story to go flat as he/she| was sent to an alternate dimension and was unable to return to the village to make the potion for |Child.</shame>
+    <shame>You trapped | in a land of cardboard cutouts.</shame>
+  </event>
 </sequence>
