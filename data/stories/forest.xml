@@ -166,5 +166,56 @@ Too late he/she| realizes that he/she| is stepping into a pit. Unable to catch h
         <shame>You taught | the hard way that chasing after random forest cats in the middle of the night is a bad plan.</shame>
       </event>
     </choice>
+    <choice selection="A fairy.">
+      <event
+        title="Running After a Fairy"
+        question="How fast does the fairy make Andrea chase her?"
+      >
+        <p>
+| starts to hear a sound and he/she| can't tell whether it is a buzzing or the most beautiful music he/she| has ever heard. As it gets louder he/she| notices the area around him/her| starting to get brighter. He/she| looks around and sees a fairy, glowing brightly in the dark. The fairy beckons to him/her|, and then flies away. | hesitates briefly, and then runs after the fairy.
+        </p>
+      <success
+        choice="Running speed"
+        title="A Successful Chase"
+      >
+        <p>
+| chases the fairy for about an hour, starting to doubt whether this is such a good idea, when the fairy stops. He/she| catches up to it and sees an |Plant plant under it. Carefully, he/she| reaches down and picks it. When he/she| looks up, the fairy is gone.
+        </p>
+        <p>
+He/she| falls to his/her| knees and thanks You for guiding him/her| to the plant. He/she| then gets up and starts heading back to his/her| home.
+        </p>
+      </success>
+      <danger
+        choice="Ludicious speed"
+        title="Can't Stop Chasing"
+        question="What stops Andrea's chase?"
+      >
+        <p>
+The chase after the fairy becomes faster and faster, but unfortunately | does not seem to be able to break free of its grip.
+        </p>
+      </danger>
+      <averted
+        choice="A tree."
+        title="Slammed Into a Tree"
+      >
+        <p>
+Suddenly the run ends with | slamming into a tree. She falls to the ground. After a few moments, she gets up, nursing splitting headache.  Miracuously, she finds a |Plant at the bottom of the tree. She picks it and returns home.
+        </p>
+      </averted>
+      <failure
+        choice="Time."
+        title="Passage of Time"
+      >
+        <p>
+| runs faster and faster to catch up with the fairy. Everything starts to blur until there is only him/her| and the fairy. Eventually it all fades to black.
+        </p>
+        <p>
+| wakes up to the sounds of birds singing.  After a moment of disorientation, he/she| realizes that he/she| is still in the forest, and it is now morning.  She weeps, for surely by now |Child is dead.
+        </p>
+      </failure>
+      <shame>You made | fail to realize that chasing after a random fairy was a bad idea.</shame>
+      <shame>You made | learn the hard way that not all fairies are good fairies.</shame>
+      </event>
+    </choice>
   </branch>
 </sequence>
