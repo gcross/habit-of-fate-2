@@ -35,19 +35,20 @@ import HabitOfFate.XML (runParserOnFile)
 
 import Paths_habit_of_fate
 
+pathFromSubstitutions ∷ Substitutions → Text
+pathFromSubstitutions =
+  unwrapSubstitutions
+  >>>
+  map (\case
+    Literal text → text
+    Substitution s_data → substitute (Gendered "(thing)" Neuter) s_data
+  )
+  >>>
+  mconcat
+
 pathsWithoutFame ∷ Story → [Text]
 pathsWithoutFame = (:[]) >>> go ""
  where
-  pathFromSubstitutions =
-    unwrapSubstitutions
-    >>>
-    map (\case
-      Literal text → text
-      Substitution s_data → substitute (Gendered "(thing)" Neuter) s_data
-    )
-    >>>
-    mconcat
-
   go ∷ Text → [Story] → [Text]
   go path (Branch{..}:rest) =
     (traverse
