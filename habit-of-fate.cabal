@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 21c8dacee06027a8d218374f1ec161ec57fe357038614c4162d05058756e2d04
+-- hash: 06c56fb92cfe08296d2d8fdc283c9d5419f177249ccdf53f4cc250216251f5ce
 
 name:           habit-of-fate
 version:        0.1.0.0
@@ -33,6 +33,7 @@ library
       HabitOfFate.Data.Markdown
       HabitOfFate.Data.Story
       HabitOfFate.Data.Substitutions
+      HabitOfFate.HTML
       HabitOfFate.Operators
       HabitOfFate.Story
       HabitOfFate.Substitution
@@ -69,6 +70,22 @@ library
     , th-lift-instances
     , transformers
     , unordered-containers
+  default-language: Haskell2010
+
+executable generate-html
+  main-is: generate-html.hs
+  other-modules:
+      Paths_habit_of_fate
+  hs-source-dirs:
+      sources/executables
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , blaze-html
+    , directory
+    , filepath
+    , habit-of-fate
+    , text
   default-language: Haskell2010
 
 test-suite test-story
