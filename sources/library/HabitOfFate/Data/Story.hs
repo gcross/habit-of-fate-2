@@ -19,13 +19,14 @@
 {-# LANGUAGE DisambiguateRecordFields #-}
 {-# LANGUAGE UnicodeSyntax #-}
 
-module HabitOfFate.Data.Story (Story(..),Substitute(..)) where
+module HabitOfFate.Data.Story (StoryNode(..),Substitute(..)) where
 
 import Data.List.NonEmpty (NonEmpty)
 import Data.Text (Text)
 
 import HabitOfFate.Data.Content (BodyContent,Content)
 import HabitOfFate.Data.Gender (Gendered)
+import HabitOfFate.Data.Narrative (Narrative)
 import HabitOfFate.Data.Substitutions (Substitutions)
 
 data Substitute = Substitute
@@ -34,12 +35,9 @@ data Substitute = Substitute
   }
   deriving (Eq,Ord,Read,Show)
 
-data Story =
-    Narrative
-    { title ∷ Substitutions
-    , content ∷ BodyContent
-    }
-  | Event
+data StoryNode =
+    NarrativeNode Narrative
+  | EventNode
     { common_title ∷ Substitutions
     , common_content ∷ BodyContent
     , common_question ∷ Substitutions
@@ -58,18 +56,18 @@ data Story =
     , failure_content ∷ BodyContent
     , shames ∷ NonEmpty Content
     }
-  | Branch
+  | BranchNode
     { title ∷ Substitutions
     , content ∷ BodyContent
     , question ∷ Substitutions
-    , choices ∷ NonEmpty (Substitutions,Story)
+    , choices ∷ NonEmpty (Substitutions,StoryNode)
     }
-  | Random
-    { stories ∷ NonEmpty Story
+  | RandomNode
+    { stories ∷ NonEmpty StoryNode
     }
-  | Sequence
+  | SequenceNode
     { substitutes ∷ [Substitute]
     , fames ∷ [Content]
-    , stories ∷ NonEmpty Story
+    , stories ∷ NonEmpty StoryNode
     }
   deriving (Eq,Ord,Read,Show)

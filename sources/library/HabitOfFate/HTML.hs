@@ -39,6 +39,7 @@ import qualified Text.Blaze.XHtml5.Attributes as A
 
 import HabitOfFate.Data.Content
 import HabitOfFate.Data.Gender
+import HabitOfFate.Data.Narrative
 import HabitOfFate.Data.Story
 import qualified HabitOfFate.Data.Substitutions as Substitutions
 import HabitOfFate.Data.Substitutions
@@ -81,10 +82,10 @@ generateBodyContent substitution_map =
 
 type Links = [(FilePath,Substitutions)]
 
-generatePages ∷ Story → [(FilePath,Html)]
+generatePages ∷ StoryNode → [(FilePath,Html)]
 generatePages = go "0.html" Nothing >>> flip evalState mempty >>> (_head . _1 .~ "index.html")
  where
-  go ∷ FilePath → Maybe FilePath → Story → State SubstitutionMap [(FilePath,Html)]
+  go ∷ FilePath → Maybe FilePath → StoryNode → State SubstitutionMap [(FilePath,Html)]
   go current_filename maybe_next_filename story = do
     substitution_map ← get
     let continue_links, back_to_list_of_quests_links ∷ Links
@@ -139,8 +140,8 @@ generatePages = go "0.html" Nothing >>> flip evalState mempty >>> (_head . _1 .~
             ]
 
     case story of
-      Narrative{..} → pure [(current_filename,pageWithDefaultLinks title content)]
-      Event{..} →
+      NarrativeNode (Narrative{..}) → pure [(current_filename,pageWithDefaultLinks title content)]
+      EventNode{..} →
         let success_filename = "S-" ⊕ current_filename
             danger_filename = "D-" ⊕ current_filename
             averted_filename = "A-" ⊕ current_filename
@@ -163,7 +164,7 @@ generatePages = go "0.html" Nothing >>> flip evalState mempty >>> (_head . _1 .~
           ,(averted_filename,pageWithLinks averted_title averted_content progress_possible_links)
           ,(failure_filename,pageWithLinks failure_title failure_content back_to_the_start_of_event_links)
           ]
-      Branch{..} →
+      BranchNode{..} →
         let choices_with_filenames =
               [ (show i ⊕ "-" ⊕ current_filename,selection,choice_story)
               | i ← [(0 ∷ Int)..]
@@ -183,9 +184,9 @@ generatePages = go "0.html" Nothing >>> flip evalState mempty >>> (_head . _1 .~
             ):
             )
           )
-      Random{..} →
+      RandomNode{..} →
         generateStories stories
-      Sequence{..} → do
+      SequenceNode{..} → do
         put $ substitution_map ⊕ HashMap.fromList [(reference,gendered) | Substitute reference (gendered :| _) ← substitutes]
         pages ← generateStories stories
         put substitution_map

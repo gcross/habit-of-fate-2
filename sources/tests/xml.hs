@@ -33,6 +33,7 @@ import Test.Tasty.HUnit ((@?))
 
 import HabitOfFate.Data.Content
 import HabitOfFate.Data.Gender
+import HabitOfFate.Data.Narrative
 import HabitOfFate.Data.Story
 import HabitOfFate.Data.Substitutions
 import HabitOfFate.Operators ((⊕))
@@ -49,7 +50,7 @@ withContentsInTemporaryFile contents f = withSystemTempFile "story" $ \filepath 
   hClose handle
   f filepath
 
-runParserOnString ∷ String → IO (Either String Story)
+runParserOnString ∷ String → IO (Either String StoryNode)
 runParserOnString = flip withContentsInTemporaryFile runParserOnFile
 
 main ∷ HasCallStack ⇒ IO ()
@@ -58,7 +59,7 @@ main = doMain
     [ testCase "narrative" $
         runParserOnString "<narrative title=\"stuff\"><p>happens</p></narrative>"
         >>=
-        (@?= Right (Narrative "stuff" "happens"))
+        (@?= Right (NarrativeNode $ Narrative "stuff" "happens"))
     , testCase "event" $
         runParserOnString "<event title=\"eve\" question=\"quest\"><p>common</p><success choice=\"right\" title=\"good\"><p>yay</p></success><danger choice=\"gamble\" title=\"possibly\" question=\"roll\"><p>feeling lucky</p></danger><averted choice=\"soso\" title=\"maybe\"><p>okay</p></averted><failure choice=\"wrong\" title=\"bad\"><p>no</p></failure><shame>what a shame</shame></event>"
         >>=
@@ -79,24 +80,24 @@ main = doMain
                  failure_title = "bad"
                  failure_content = "no"
                  shames = ["what a shame"]
-             in Right (Event{..})
+             in Right (EventNode{..})
         )
     , testCase "branch" $
         runParserOnString "<branch title=\"stuff\" question=\"why?\"><p>story time</p><choice selection=\"because\"><narrative title=\"answer\"><p>so it would seem</p></narrative></choice></branch>"
         >>=
-        (@?= Right (Branch "stuff" "story time" "why?" [("because",Narrative "answer" "so it would seem")]))
+        (@?= Right (BranchNode "stuff" "story time" "why?" [("because",NarrativeNode $ Narrative "answer" "so it would seem")]))
     , testCase "random" $
         runParserOnString "<random><narrative title=\"title\"><p>content</p></narrative></random>"
         >>=
-        (@?= Right (Random [Narrative "title" "content"]))
+        (@?= Right (RandomNode [NarrativeNode $ Narrative "title" "content"]))
     , testCase "sequence with substitute and fame" $
         runParserOnString "<sequence><substitute placeholder=\"hole\"><candidate name=\"Ander\" gender=\"male\"/></substitute><fame>famous</fame><narrative title=\"title\"><p>content</p></narrative></sequence>"
         >>=
-        (@?= Right (Sequence [Substitute "hole" [Gendered "Ander" Male]] ["famous"] [Narrative "title" "content"]))
+        (@?= Right (SequenceNode [Substitute "hole" [Gendered "Ander" Male]] ["famous"] [NarrativeNode $ Narrative "title" "content"]))
     , testCase "file" $ withContentsInTemporaryFile "<narrative title=\"stuff\"><p>happens</p></narrative>" $ \filepath →
         runParserOnString ("<file path=\"" ⊕ filepath ⊕ "\"/>")
         >>=
-        (@?= Right (Narrative "stuff" "happens"))
+        (@?= Right (NarrativeNode $ Narrative "stuff" "happens"))
     ]
   , testGroup "whitespace and comments ignored when appropriate"
     [ testCase "event" $
@@ -142,7 +143,7 @@ main = doMain
                  failure_title = "bad"
                  failure_content = "no"
                  shames = ["\n    it's a shame\n  "]
-             in Right (Event{..})
+             in Right (EventNode{..})
         )
     , testCase "branch/choice" $
         runParserOnString [i|
@@ -154,7 +155,7 @@ main = doMain
 </branch>
 |]
         >>=
-        (@?= Right (Branch "stuff" "story time" "why?" [("because",Narrative "answer" "so it would seem")]))
+        (@?= Right (BranchNode "stuff" "story time" "why?" [("because",NarrativeNode $ Narrative "answer" "so it would seem")]))
     , testCase "random" $
         runParserOnString [i|
 <random><!-- comment -->
@@ -163,7 +164,7 @@ main = doMain
 </random>
 |]
         >>=
-        (@?= Right (Random [Narrative "title1" "content1",Narrative "title2" "content2"]))
+        (@?= Right (RandomNode [NarrativeNode $ Narrative "title1" "content1",NarrativeNode $ Narrative "title2" "content2"]))
     , testCase "sequence" $
         runParserOnString [i|
 <sequence><!-- comment -->
@@ -172,7 +173,7 @@ main = doMain
 </sequence>
 |]
         >>=
-        (@?= Right (Sequence [] [] [Narrative "title1" "content1",Narrative "title2" "content2"]))
+        (@?= Right (SequenceNode [] [] [NarrativeNode $ Narrative "title1" "content1",NarrativeNode $ Narrative "title2" "content2"]))
     , testCase "sequence with substitute/candidate and fame" $
         runParserOnString [i|
 <sequence><!-- comment -->
@@ -184,25 +185,25 @@ main = doMain
 </sequence>
 |]
         >>=
-        (@?= Right (Sequence [Substitute "hole" [Gendered "Ander" Male]] ["all be praised"] [Narrative "stuff" "happens"]))
+        (@?= Right (SequenceNode [Substitute "hole" [Gendered "Ander" Male]] ["all be praised"] [NarrativeNode $ Narrative "stuff" "happens"]))
     ]
   , testGroup "content formatting"
     [ testCase "bold" $
         runParserOnString "<narrative title=\"stuff\"><p><b>happens</b></p></narrative>"
         >>=
-        (@?= Right (Narrative "stuff" $ BodyContent [Content [Bold "happens"]]))
+        (@?= Right (NarrativeNode $ Narrative "stuff" $ BodyContent [Content [Bold "happens"]]))
     , testCase "mixed" $
         runParserOnString "<narrative title=\"format\"><p>regular<b>bold</b><b>BOLD</b>unbold</p></narrative>"
         >>=
-        (@?= Right (Narrative "format" $ BodyContent [Content ["regular", Bold "bold", Bold "BOLD", "unbold"]]))
+        (@?= Right (NarrativeNode $ Narrative "format" $ BodyContent [Content ["regular", Bold "bold", Bold "BOLD", "unbold"]]))
     , testCase "multiple paragraphs" $
         runParserOnString "<narrative title=\"stuff\"><p>1</p><p>2</p></narrative>"
         >>=
-        (@?= Right (Narrative "stuff" $ BodyContent ["1","2"]))
+        (@?= Right (NarrativeNode $ Narrative "stuff" $ BodyContent ["1","2"]))
     , testCase "multiple paragraphs with one bold" $
         runParserOnString "<narrative title=\"stuff\"><p><b>1</b></p><p>2</p></narrative>"
         >>=
-        (@?= Right (Narrative "stuff" $ BodyContent [Content [Bold "1"],"2"]))
+        (@?= Right (NarrativeNode $ Narrative "stuff" $ BodyContent [Content [Bold "1"],"2"]))
     ]
   , testGroup "substitutions"
     [ testCase "known placeholder" $
@@ -216,10 +217,10 @@ main = doMain
 |]
         >>=
         (@?= Right
-          (Sequence
+          (SequenceNode
             [Substitute "Name" [Gendered "Ander" Male]]
             []
-            [Narrative
+            [NarrativeNode $ Narrative
               "title1"
               (BodyContent [Content
                 [Unformatted

@@ -27,7 +27,7 @@ import Data.Text (Text,unpack)
 import System.FilePath ((</>))
 
 import HabitOfFate.Data.Gender (Gender(..),Gendered(..))
-import HabitOfFate.Data.Story (Story(..))
+import HabitOfFate.Data.Story (StoryNode(..))
 import HabitOfFate.Data.Substitutions (SubstitutionChunk(..),Substitutions(..))
 import HabitOfFate.Operators ((⊕))
 import HabitOfFate.Substitution (substitute)
@@ -46,18 +46,18 @@ pathFromSubstitutions =
   >>>
   mconcat
 
-pathsWithoutFame ∷ Story → [Text]
+pathsWithoutFame ∷ StoryNode → [Text]
 pathsWithoutFame = (:[]) >>> go ""
  where
-  go ∷ Text → [Story] → [Text]
-  go path (Branch{..}:rest) =
+  go ∷ Text → [StoryNode] → [Text]
+  go path (BranchNode{..}:rest) =
     (traverse
       (\(selection,choice) → go (path ⊕ "/" ⊕ pathFromSubstitutions selection) (choice:[]))
       (NonEmpty.toList choices)
     )
     >>=
     (mconcat >>> flip go rest)
-  go path (Sequence{..}:rest)
+  go path (SequenceNode{..}:rest)
     | null fames =
         go path (NonEmpty.toList stories)
         >>=
@@ -66,7 +66,7 @@ pathsWithoutFame = (:[]) >>> go ""
   go path [] = pure path
   go path (_:rest) = go path rest
 
-loadStory ∷ IO Story
+loadStory ∷ IO StoryNode
 loadStory = do
   story ←
     getDataFileName ("stories" </> "root.xml")

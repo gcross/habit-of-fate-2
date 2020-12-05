@@ -62,6 +62,7 @@ import Text.XML.Expat.SAX (SAXEvent(..),XMLParseLocation(..))
 
 import HabitOfFate.Data.Content
 import HabitOfFate.Data.Gender
+import HabitOfFate.Data.Narrative
 import qualified HabitOfFate.Data.Story as Story
 import HabitOfFate.Data.Story
 import HabitOfFate.Data.Substitutions
@@ -238,11 +239,11 @@ parseBodyContent = do
   optional skipWhitespaceAndComments
   sepEndBy1 parseParagraph skipWhitespaceAndComments <&> BodyContent
 
-parseNarrative ∷ Parser Story
+parseNarrative ∷ Parser Narrative
 parseNarrative = withElement "narrative" ["title"] $ \[title] →
   Narrative <$> parseTextSubstitutions title <*> parseBodyContent
 
-parseEvent ∷ Parser Story
+parseEvent ∷ Parser StoryNode
 parseEvent = withElement "event" ["title","question"] $ \[event_title,event_question] → do
   common_title ← parseTextSubstitutions event_title
   common_question ← parseTextSubstitutions event_question
@@ -275,26 +276,26 @@ parseEvent = withElement "event" ["title","question"] $ \[event_title,event_ques
   skipWhitespaceAndComments
   shames ← manyNonEmptyIgnoringSurroundingWhitespaceAndComments $
     withElement "shame" [] $ \[] → parseContent
-  pure $ Event {..}
+  pure $ EventNode {..}
 
-parseChoice ∷ Parser (Substitutions,Story)
+parseChoice ∷ Parser (Substitutions,StoryNode)
 parseChoice = withElement "choice" ["selection"] $ \[selection] →
-  (,) <$> parseTextSubstitutions selection <*> parseStory
+  (,) <$> parseTextSubstitutions selection <*> parseStoryNode
 
-parseBranch ∷ Parser Story
+parseBranch ∷ Parser StoryNode
 parseBranch = withElement "branch" ["title","question"] $ \[title_text,question_text] → do
   title ← parseTextSubstitutions title_text
   content ← parseBodyContent
   question ← parseTextSubstitutions question_text
   choices ← sepEndByNonEmpty parseChoice skipWhitespaceAndComments
-  pure $ Branch {..}
+  pure $ BranchNode {..}
 
-parseRandom ∷ Parser Story
+parseRandom ∷ Parser StoryNode
 parseRandom = withElement "random" [] $ \[] → do
   optional skipWhitespaceAndComments
-  Random <$> sepEndByNonEmpty parseStory skipWhitespaceAndComments
+  RandomNode <$> sepEndByNonEmpty parseStoryNode skipWhitespaceAndComments
 
-parseSequence ∷ Parser Story
+parseSequence ∷ Parser StoryNode
 parseSequence = withElement "sequence" [] $ \[] → do
   skipWhitespaceAndComments
   substitutes ← sepEndBy parseSubstitute skipWhitespaceAndComments
@@ -308,11 +309,11 @@ parseSequence = withElement "sequence" [] $ \[] → do
     fail $ "Conflicting placeholders " ⊕ (conflicting_placeholders |> HashSet.toList |> map unpack |> show)
   putState $ old_placeholders ⊕ placeholders_as_set
   fames ← sepEndBy parseFame skipWhitespaceAndComments
-  stories ← sepEndByNonEmpty parseStory skipWhitespaceAndComments
+  stories ← sepEndByNonEmpty parseStoryNode skipWhitespaceAndComments
   putState old_placeholders
-  pure $ Sequence{..}
+  pure $ SequenceNode{..}
 
-runParserOnFile ∷ MonadIO m ⇒ FilePath → m (Either String Story)
+runParserOnFile ∷ MonadIO m ⇒ FilePath → m (Either String StoryNode)
 runParserOnFile filepath = liftIO $
   (
     (if isAbsolute filepath
@@ -322,24 +323,24 @@ runParserOnFile filepath = liftIO $
     >>=
     LB.readFile
     >>=
-    (SAX.parseLocations SAX.defaultParseOptions >>> Parsec.runParserT (xmlDeclaration >> parseStory) HashSet.empty filepath)
+    (SAX.parseLocations SAX.defaultParseOptions >>> Parsec.runParserT (xmlDeclaration >> parseStoryNode) HashSet.empty filepath)
   )
   <&>
   first show
 
-parseFile ∷ FilePath → Parser Story
+parseFile ∷ FilePath → Parser StoryNode
 parseFile =
   (runParserOnFile >>> liftIO)
   >=>
   either (show >>> ("error parsing file: " ⊕) >>> fail) pure
 
-parseFileElement ∷ Parser Story
+parseFileElement ∷ Parser StoryNode
 parseFileElement = withElement "file" ["path"] $ \[path] →
   parseFile (unpack path)
 
-parseStory ∷ Parser Story
-parseStory = between skipWhitespaceAndComments skipWhitespaceAndComments $
-      parseNarrative
+parseStoryNode ∷ Parser StoryNode
+parseStoryNode = between skipWhitespaceAndComments skipWhitespaceAndComments $
+      (NarrativeNode <$> parseNarrative)
   <|> parseEvent
   <|> parseBranch
   <|> parseRandom
