@@ -61,6 +61,7 @@ import qualified Text.XML.Expat.SAX as SAX
 import Text.XML.Expat.SAX (SAXEvent(..),XMLParseLocation(..))
 
 import HabitOfFate.Data.Content
+import HabitOfFate.Data.Event
 import HabitOfFate.Data.Gender
 import HabitOfFate.Data.Narrative
 import qualified HabitOfFate.Data.Story as Story
@@ -243,7 +244,7 @@ parseNarrative ∷ Parser Narrative
 parseNarrative = withElement "narrative" ["title"] $ \[title] →
   Narrative <$> parseTextSubstitutions title <*> parseBodyContent
 
-parseEvent ∷ Parser StoryNode
+parseEvent ∷ Parser Event
 parseEvent = withElement "event" ["title","question"] $ \[event_title,event_question] → do
   common_title ← parseTextSubstitutions event_title
   common_question ← parseTextSubstitutions event_question
@@ -276,7 +277,7 @@ parseEvent = withElement "event" ["title","question"] $ \[event_title,event_ques
   skipWhitespaceAndComments
   shames ← manyNonEmptyIgnoringSurroundingWhitespaceAndComments $
     withElement "shame" [] $ \[] → parseContent
-  pure $ EventNode {..}
+  pure $ Event {..}
 
 parseChoice ∷ Parser (Substitutions,StoryNode)
 parseChoice = withElement "choice" ["selection"] $ \[selection] →
@@ -341,7 +342,7 @@ parseFileElement = withElement "file" ["path"] $ \[path] →
 parseStoryNode ∷ Parser StoryNode
 parseStoryNode = between skipWhitespaceAndComments skipWhitespaceAndComments $
       (NarrativeNode <$> parseNarrative)
-  <|> parseEvent
+  <|> (EventNode <$> parseEvent)
   <|> parseBranch
   <|> parseRandom
   <|> parseSequence

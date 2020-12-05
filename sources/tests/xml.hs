@@ -32,6 +32,7 @@ import System.IO.Temp (withSystemTempFile)
 import Test.Tasty.HUnit ((@?))
 
 import HabitOfFate.Data.Content
+import HabitOfFate.Data.Event
 import HabitOfFate.Data.Gender
 import HabitOfFate.Data.Narrative
 import HabitOfFate.Data.Story
@@ -80,7 +81,7 @@ main = doMain
                  failure_title = "bad"
                  failure_content = "no"
                  shames = ["what a shame"]
-             in Right (EventNode{..})
+             in Right (EventNode $ Event{..})
         )
     , testCase "branch" $
         runParserOnString "<branch title=\"stuff\" question=\"why?\"><p>story time</p><choice selection=\"because\"><narrative title=\"answer\"><p>so it would seem</p></narrative></choice></branch>"
@@ -143,7 +144,7 @@ main = doMain
                  failure_title = "bad"
                  failure_content = "no"
                  shames = ["\n    it's a shame\n  "]
-             in Right (EventNode{..})
+             in Right (EventNode $ Event{..})
         )
     , testCase "branch/choice" $
         runParserOnString [i|

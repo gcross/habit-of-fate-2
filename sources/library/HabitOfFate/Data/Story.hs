@@ -25,6 +25,7 @@ import Data.List.NonEmpty (NonEmpty)
 import Data.Text (Text)
 
 import HabitOfFate.Data.Content (BodyContent,Content)
+import HabitOfFate.Data.Event
 import HabitOfFate.Data.Gender (Gendered)
 import HabitOfFate.Data.Narrative (Narrative)
 import HabitOfFate.Data.Substitutions (Substitutions)
@@ -37,25 +38,7 @@ data Substitute = Substitute
 
 data StoryNode =
     NarrativeNode Narrative
-  | EventNode
-    { common_title ∷ Substitutions
-    , common_content ∷ BodyContent
-    , common_question ∷ Substitutions
-    , success_choice ∷ Substitutions
-    , success_title ∷ Substitutions
-    , success_content ∷ BodyContent
-    , danger_choice ∷ Substitutions
-    , danger_title ∷ Substitutions
-    , danger_content ∷ BodyContent
-    , danger_question ∷ Substitutions
-    , averted_choice ∷ Substitutions
-    , averted_title ∷ Substitutions
-    , averted_content ∷ BodyContent
-    , failure_choice ∷ Substitutions
-    , failure_title ∷ Substitutions
-    , failure_content ∷ BodyContent
-    , shames ∷ NonEmpty Content
-    }
+  | EventNode Event
   | BranchNode
     { title ∷ Substitutions
     , content ∷ BodyContent
