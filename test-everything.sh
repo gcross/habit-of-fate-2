@@ -1,2 +1,2 @@
 #!/bin/sh
-stack build :test-substitution :test-story :test-xml
+stack build :generate-html :test-substitution :test-story :test-xml
