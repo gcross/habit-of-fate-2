@@ -64,6 +64,7 @@ import HabitOfFate.Data.Content
 import HabitOfFate.Data.Event
 import HabitOfFate.Data.Gender
 import HabitOfFate.Data.Narrative
+import HabitOfFate.Data.Occurance
 import qualified HabitOfFate.Data.Story as Story
 import HabitOfFate.Data.Story
 import HabitOfFate.Data.Substitutions
@@ -335,8 +336,8 @@ parseFileElement = withElement "file" ["path"] $ \[path] →
 
 parseStoryNode ∷ Parser StoryNode
 parseStoryNode = between skipWhitespaceAndComments skipWhitespaceAndComments $
-      (NarrativeNode <$> parseNarrative)
-  <|> (EventNode <$> parseEvent)
+      ((NarrativeOccurance >>> OccuranceNode) <$> parseNarrative)
+  <|> ((EventOccurance >>> OccuranceNode) <$> parseEvent)
   <|> parseBranch
   <|> parseRandom
   <|> parseSequence

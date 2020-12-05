@@ -41,6 +41,7 @@ import HabitOfFate.Data.Content
 import HabitOfFate.Data.Event
 import HabitOfFate.Data.Gender
 import HabitOfFate.Data.Narrative
+import HabitOfFate.Data.Occurance
 import HabitOfFate.Data.Story
 import qualified HabitOfFate.Data.Substitutions as Substitutions
 import HabitOfFate.Data.Substitutions
@@ -141,8 +142,8 @@ generatePages = go "0.html" Nothing >>> flip evalState mempty >>> (_head . _1 .~
             ]
 
     case story of
-      NarrativeNode narrative → pure [(current_filename,pageWithDefaultLinks narrative)]
-      EventNode (Event{..}) →
+      OccuranceNode (NarrativeOccurance narrative) → pure [(current_filename,pageWithDefaultLinks narrative)]
+      OccuranceNode (EventOccurance Event{..}) →
         let success_filename = "S-" ⊕ current_filename
             danger_filename = "D-" ⊕ current_filename
             averted_filename = "A-" ⊕ current_filename

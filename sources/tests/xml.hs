@@ -26,6 +26,7 @@ import Control.Lens (_Left)
 import Control.Lens.Extras (is)
 import Data.CallStack (HasCallStack)
 import Data.String.Interpolate (i)
+import Data.String (IsString(..))
 import System.FilePath (FilePath)
 import System.IO (hClose,hFlush,hPutStr,hPutStrLn,hSetEncoding,utf8)
 import System.IO.Temp (withSystemTempFile)
@@ -35,6 +36,7 @@ import HabitOfFate.Data.Content
 import HabitOfFate.Data.Event
 import HabitOfFate.Data.Gender
 import HabitOfFate.Data.Narrative
+import HabitOfFate.Data.Occurance
 import HabitOfFate.Data.Story
 import HabitOfFate.Data.Substitutions
 import HabitOfFate.Operators ((⊕))
@@ -60,7 +62,7 @@ main = doMain
     [ testCase "narrative" $
         runParserOnString "<narrative title=\"stuff\"><p>happens</p></narrative>"
         >>=
-        (@?= Right (NarrativeNode $ Narrative "stuff" "happens"))
+        (@?= Right (OccuranceNode $ NarrativeOccurance $ Narrative "stuff" "happens"))
     , testCase "event" $
         runParserOnString "<event title=\"eve\" question=\"quest\"><p>common</p><success choice=\"right\" title=\"good\"><p>yay</p></success><danger choice=\"gamble\" title=\"possibly\" question=\"roll\"><p>feeling lucky</p></danger><averted choice=\"soso\" title=\"maybe\"><p>okay</p></averted><failure choice=\"wrong\" title=\"bad\"><p>no</p></failure><shame>what a shame</shame></event>"
         >>=
@@ -76,24 +78,24 @@ main = doMain
                  failure_choice = "wrong"
                  failure_narrative = Narrative "bad" "no"
                  shames = ["what a shame"]
-             in Right (EventNode $ Event{..})
+             in Right (OccuranceNode $ EventOccurance $ Event{..})
         )
     , testCase "branch" $
         runParserOnString "<branch title=\"stuff\" question=\"why?\"><p>story time</p><choice selection=\"because\"><narrative title=\"answer\"><p>so it would seem</p></narrative></choice></branch>"
         >>=
-        (@?= Right (BranchNode (Narrative "stuff" "story time") "why?" [("because",NarrativeNode $ Narrative "answer" "so it would seem")]))
+        (@?= Right (BranchNode (Narrative "stuff" "story time") "why?" [("because",OccuranceNode $ NarrativeOccurance $ Narrative "answer" "so it would seem")]))
     , testCase "random" $
         runParserOnString "<random><narrative title=\"title\"><p>content</p></narrative></random>"
         >>=
-        (@?= Right (RandomNode [NarrativeNode $ Narrative "title" "content"]))
+        (@?= Right (RandomNode [OccuranceNode $ NarrativeOccurance $ Narrative "title" "content"]))
     , testCase "sequence with substitute and fame" $
         runParserOnString "<sequence><substitute placeholder=\"hole\"><candidate name=\"Ander\" gender=\"male\"/></substitute><fame>famous</fame><narrative title=\"title\"><p>content</p></narrative></sequence>"
         >>=
-        (@?= Right (SequenceNode [Substitute "hole" [Gendered "Ander" Male]] ["famous"] [NarrativeNode $ Narrative "title" "content"]))
+        (@?= Right (SequenceNode [Substitute "hole" [Gendered "Ander" Male]] ["famous"] [OccuranceNode $ NarrativeOccurance $ Narrative "title" "content"]))
     , testCase "file" $ withContentsInTemporaryFile "<narrative title=\"stuff\"><p>happens</p></narrative>" $ \filepath →
         runParserOnString ("<file path=\"" ⊕ filepath ⊕ "\"/>")
         >>=
-        (@?= Right (NarrativeNode $ Narrative "stuff" "happens"))
+        (@?= Right (OccuranceNode $ NarrativeOccurance $ Narrative "stuff" "happens"))
     ]
   , testGroup "whitespace and comments ignored when appropriate"
     [ testCase "event" $
@@ -134,7 +136,7 @@ main = doMain
                  failure_choice = "wrong"
                  failure_narrative = Narrative "bad" "no"
                  shames = ["\n    it's a shame\n  "]
-             in Right (EventNode $ Event{..})
+             in Right (OccuranceNode $ EventOccurance $ Event{..})
         )
     , testCase "branch/choice" $
         runParserOnString [i|
@@ -146,7 +148,7 @@ main = doMain
 </branch>
 |]
         >>=
-        (@?= Right (BranchNode (Narrative "stuff" "story time") "why?" [("because",NarrativeNode $ Narrative "answer" "so it would seem")]))
+        (@?= Right (BranchNode (Narrative "stuff" "story time") "why?" [("because",OccuranceNode $ NarrativeOccurance $ Narrative "answer" "so it would seem")]))
     , testCase "random" $
         runParserOnString [i|
 <random><!-- comment -->
@@ -155,7 +157,7 @@ main = doMain
 </random>
 |]
         >>=
-        (@?= Right (RandomNode [NarrativeNode $ Narrative "title1" "content1",NarrativeNode $ Narrative "title2" "content2"]))
+        (@?= Right (RandomNode [OccuranceNode $ NarrativeOccurance $ Narrative "title1" "content1",OccuranceNode $ NarrativeOccurance $ Narrative "title2" "content2"]))
     , testCase "sequence" $
         runParserOnString [i|
 <sequence><!-- comment -->
@@ -164,7 +166,7 @@ main = doMain
 </sequence>
 |]
         >>=
-        (@?= Right (SequenceNode [] [] [NarrativeNode $ Narrative "title1" "content1",NarrativeNode $ Narrative "title2" "content2"]))
+        (@?= Right (SequenceNode [] [] [OccuranceNode $ NarrativeOccurance $ Narrative "title1" "content1",OccuranceNode $ NarrativeOccurance $ Narrative "title2" "content2"]))
     , testCase "sequence with substitute/candidate and fame" $
         runParserOnString [i|
 <sequence><!-- comment -->
@@ -176,25 +178,25 @@ main = doMain
 </sequence>
 |]
         >>=
-        (@?= Right (SequenceNode [Substitute "hole" [Gendered "Ander" Male]] ["all be praised"] [NarrativeNode $ Narrative "stuff" "happens"]))
+        (@?= Right (SequenceNode [Substitute "hole" [Gendered "Ander" Male]] ["all be praised"] [OccuranceNode $ NarrativeOccurance $ Narrative "stuff" "happens"]))
     ]
   , testGroup "content formatting"
     [ testCase "bold" $
         runParserOnString "<narrative title=\"stuff\"><p><b>happens</b></p></narrative>"
         >>=
-        (@?= Right (NarrativeNode $ Narrative "stuff" $ BodyContent [Content [Bold "happens"]]))
+        (@?= Right (OccuranceNode $ NarrativeOccurance $ Narrative "stuff" $ BodyContent [Content [Bold "happens"]]))
     , testCase "mixed" $
         runParserOnString "<narrative title=\"format\"><p>regular<b>bold</b><b>BOLD</b>unbold</p></narrative>"
         >>=
-        (@?= Right (NarrativeNode $ Narrative "format" $ BodyContent [Content ["regular", Bold "bold", Bold "BOLD", "unbold"]]))
+        (@?= Right (OccuranceNode $ NarrativeOccurance $ Narrative "format" $ BodyContent [Content ["regular", Bold "bold", Bold "BOLD", "unbold"]]))
     , testCase "multiple paragraphs" $
         runParserOnString "<narrative title=\"stuff\"><p>1</p><p>2</p></narrative>"
         >>=
-        (@?= Right (NarrativeNode $ Narrative "stuff" $ BodyContent ["1","2"]))
+        (@?= Right (OccuranceNode $ NarrativeOccurance $ Narrative "stuff" $ BodyContent ["1","2"]))
     , testCase "multiple paragraphs with one bold" $
         runParserOnString "<narrative title=\"stuff\"><p><b>1</b></p><p>2</p></narrative>"
         >>=
-        (@?= Right (NarrativeNode $ Narrative "stuff" $ BodyContent [Content [Bold "1"],"2"]))
+        (@?= Right (OccuranceNode $ NarrativeOccurance $ Narrative "stuff" $ BodyContent [Content [Bold "1"],"2"]))
     ]
   , testGroup "substitutions"
     [ testCase "known placeholder" $
@@ -211,7 +213,7 @@ main = doMain
           (SequenceNode
             [Substitute "Name" [Gendered "Ander" Male]]
             []
-            [NarrativeNode $ Narrative
+            [OccuranceNode $ NarrativeOccurance $ Narrative
               "title1"
               (BodyContent [Content
                 [Unformatted

@@ -25,9 +25,9 @@ import Data.List.NonEmpty (NonEmpty)
 import Data.Text (Text)
 
 import HabitOfFate.Data.Content (Content)
-import HabitOfFate.Data.Event
 import HabitOfFate.Data.Gender (Gendered)
 import HabitOfFate.Data.Narrative (Narrative)
+import HabitOfFate.Data.Occurance
 import HabitOfFate.Data.Substitutions (Substitutions)
 
 data Substitute = Substitute
@@ -37,8 +37,7 @@ data Substitute = Substitute
   deriving (Eq,Ord,Read,Show)
 
 data StoryNode =
-    NarrativeNode Narrative
-  | EventNode Event
+    OccuranceNode Occurance
   | BranchNode
     { narrative ∷ Narrative
     , question ∷ Substitutions
