@@ -246,34 +246,29 @@ parseNarrative = withElement "narrative" ["title"] $ \[title] →
 
 parseEvent ∷ Parser Event
 parseEvent = withElement "event" ["title","question"] $ \[event_title,event_question] → do
-  common_title ← parseTextSubstitutions event_title
+  common_narrative ← Narrative <$> parseTextSubstitutions event_title <*> parseBodyContent
   common_question ← parseTextSubstitutions event_question
-  common_content ← parseBodyContent
   skipWhitespaceAndComments
-  (success_choice,success_title,success_content) ←
-    withElement "success" ["choice","title"] $ \[choice,title] → (,,)
+  (success_choice,success_narrative) ←
+    withElement "success" ["choice","title"] $ \[choice,title] → (,)
       <$> parseTextSubstitutions choice
-      <*> parseTextSubstitutions title
-      <*> parseBodyContent
+      <*> (Narrative <$> parseTextSubstitutions title <*> parseBodyContent)
   skipWhitespaceAndComments
-  (danger_choice,danger_title,danger_question,danger_content) ←
-    withElement "danger" ["choice","title","question"] $ \[choice,title,question] → (,,,)
+  (danger_choice,danger_question,danger_narrative) ←
+    withElement "danger" ["choice","title","question"] $ \[choice,title,question] → (,,)
       <$> parseTextSubstitutions choice
-      <*> parseTextSubstitutions title
       <*> parseTextSubstitutions question
-      <*> parseBodyContent
+      <*> (Narrative <$> parseTextSubstitutions title <*> parseBodyContent)
   skipWhitespaceAndComments
-  (averted_choice,averted_title,averted_content) ←
-    withElement "averted" ["choice","title"] $ \[choice,title] → (,,)
+  (averted_choice,averted_narrative) ←
+    withElement "averted" ["choice","title"] $ \[choice,title] → (,)
       <$> parseTextSubstitutions choice
-      <*> parseTextSubstitutions title
-      <*> parseBodyContent
+      <*> (Narrative <$> parseTextSubstitutions title <*> parseBodyContent)
   skipWhitespaceAndComments
-  (failure_choice,failure_title,failure_content) ←
-    withElement "failure" ["choice","title"] $ \[choice,title] → (,,)
+  (failure_choice,failure_narrative) ←
+    withElement "failure" ["choice","title"] $ \[choice,title] → (,)
       <$> parseTextSubstitutions choice
-      <*> parseTextSubstitutions title
-      <*> parseBodyContent
+      <*> (Narrative <$> parseTextSubstitutions title <*> parseBodyContent)
   skipWhitespaceAndComments
   shames ← manyNonEmptyIgnoringSurroundingWhitespaceAndComments $
     withElement "shame" [] $ \[] → parseContent
@@ -285,8 +280,7 @@ parseChoice = withElement "choice" ["selection"] $ \[selection] →
 
 parseBranch ∷ Parser StoryNode
 parseBranch = withElement "branch" ["title","question"] $ \[title_text,question_text] → do
-  title ← parseTextSubstitutions title_text
-  content ← parseBodyContent
+  narrative ← Narrative <$> parseTextSubstitutions title_text <*> parseBodyContent
   question ← parseTextSubstitutions question_text
   choices ← sepEndByNonEmpty parseChoice skipWhitespaceAndComments
   pure $ BranchNode {..}

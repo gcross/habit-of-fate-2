@@ -104,22 +104,22 @@ generatePages = go "0.html" Nothing >>> flip evalState mempty >>> (_head . _1 .~
         outputLinks ∷ Links → Html
         outputLinks links = H.div $ H.ul $ forM_ links $ \(page,substitutions) → H.li $ H.a ! A.href (toValue page) $ toHtml $ generateText substitution_map substitutions
 
-        pageWithLinks ∷ Substitutions → BodyContent → Links → Html
-        pageWithLinks title body_content links = H.docTypeHtml $ do
+        pageWithLinks ∷ Narrative → Links → Html
+        pageWithLinks Narrative{..} links = H.docTypeHtml $ do
           outputTitle title
           H.body $ do
-            outputBodyContent body_content
+            outputBodyContent content
             H.br
             outputLinks $ links ⊕ back_to_list_of_quests_links
 
-        pageWithDefaultLinks ∷ Substitutions → BodyContent → Html
-        pageWithDefaultLinks title body_content = pageWithLinks title body_content continue_links
+        pageWithDefaultLinks ∷ Narrative → Html
+        pageWithDefaultLinks narrative = pageWithLinks narrative continue_links
 
-        pageWithQuestion ∷ Substitutions → BodyContent → Substitutions → Links → Html
-        pageWithQuestion title body_content question links = H.docTypeHtml $ do
+        pageWithQuestion ∷ Narrative → Substitutions → Links → Html
+        pageWithQuestion Narrative{..} question links = H.docTypeHtml $ do
           outputTitle title
           H.body $ do
-            outputBodyContent body_content
+            outputBodyContent content
             H.br
             H.div $ toHtml $ generateText substitution_map question
             outputLinks $ links ⊕ if current_filename == "0.html" then [] else back_to_list_of_quests_links
@@ -141,7 +141,7 @@ generatePages = go "0.html" Nothing >>> flip evalState mempty >>> (_head . _1 .~
             ]
 
     case story of
-      NarrativeNode (Narrative{..}) → pure [(current_filename,pageWithDefaultLinks title content)]
+      NarrativeNode narrative → pure [(current_filename,pageWithDefaultLinks narrative)]
       EventNode (Event{..}) →
         let success_filename = "S-" ⊕ current_filename
             danger_filename = "D-" ⊕ current_filename
@@ -153,17 +153,17 @@ generatePages = go "0.html" Nothing >>> flip evalState mempty >>> (_head . _1 .~
 
             progress_possible_links = continue_links ⊕ back_to_the_start_of_event_links
         in pure $
-          [(current_filename,pageWithQuestion common_title common_content common_question
+          [(current_filename,pageWithQuestion common_narrative common_question
               [(success_filename,success_choice)
               ,(danger_filename,danger_choice)
               ])
-          ,(success_filename,pageWithLinks success_title success_content progress_possible_links)
-          ,(danger_filename,pageWithQuestion danger_title danger_content danger_question $
+          ,(success_filename,pageWithLinks success_narrative progress_possible_links)
+          ,(danger_filename,pageWithQuestion danger_narrative danger_question $
               [(averted_filename,averted_choice)
               ,(failure_filename,failure_choice)
               ] ⊕ back_to_the_start_of_event_links)
-          ,(averted_filename,pageWithLinks averted_title averted_content progress_possible_links)
-          ,(failure_filename,pageWithLinks failure_title failure_content back_to_the_start_of_event_links)
+          ,(averted_filename,pageWithLinks averted_narrative progress_possible_links)
+          ,(failure_filename,pageWithLinks failure_narrative back_to_the_start_of_event_links)
           ]
       BranchNode{..} →
         let choices_with_filenames =
@@ -178,7 +178,7 @@ generatePages = go "0.html" Nothing >>> flip evalState mempty >>> (_head . _1 .~
             concat
             >>>
             ((current_filename
-            ,pageWithQuestion title content question
+            ,pageWithQuestion narrative question
                 [ (choice_filename,selection)
                 | (choice_filename,selection,_) ← choices_with_filenames
                 ]

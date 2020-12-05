@@ -24,7 +24,7 @@ module HabitOfFate.Data.Story (StoryNode(..),Substitute(..)) where
 import Data.List.NonEmpty (NonEmpty)
 import Data.Text (Text)
 
-import HabitOfFate.Data.Content (BodyContent,Content)
+import HabitOfFate.Data.Content (Content)
 import HabitOfFate.Data.Event
 import HabitOfFate.Data.Gender (Gendered)
 import HabitOfFate.Data.Narrative (Narrative)
@@ -40,8 +40,7 @@ data StoryNode =
     NarrativeNode Narrative
   | EventNode Event
   | BranchNode
-    { title ∷ Substitutions
-    , content ∷ BodyContent
+    { narrative ∷ Narrative
     , question ∷ Substitutions
     , choices ∷ NonEmpty (Substitutions,StoryNode)
     }

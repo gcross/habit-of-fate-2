@@ -20,25 +20,21 @@ module HabitOfFate.Data.Event (Event(..)) where
 
 import Data.List.NonEmpty (NonEmpty)
 
-import HabitOfFate.Data.Content (BodyContent,Content)
-import HabitOfFate.Data.Substitutions (Substitutions)
+import HabitOfFate.Data.Content
+import HabitOfFate.Data.Narrative
+import HabitOfFate.Data.Substitutions
 
 data Event = Event
-    { common_title ∷ Substitutions
-    , common_content ∷ BodyContent
+    { common_narrative ∷ Narrative
     , common_question ∷ Substitutions
     , success_choice ∷ Substitutions
-    , success_title ∷ Substitutions
-    , success_content ∷ BodyContent
+    , success_narrative ∷ Narrative
     , danger_choice ∷ Substitutions
-    , danger_title ∷ Substitutions
-    , danger_content ∷ BodyContent
+    , danger_narrative ∷ Narrative
     , danger_question ∷ Substitutions
     , averted_choice ∷ Substitutions
-    , averted_title ∷ Substitutions
-    , averted_content ∷ BodyContent
+    , averted_narrative ∷ Narrative
     , failure_choice ∷ Substitutions
-    , failure_title ∷ Substitutions
-    , failure_content ∷ BodyContent
+    , failure_narrative ∷ Narrative
     , shames ∷ NonEmpty Content
     } deriving (Eq,Ord,Read,Show)

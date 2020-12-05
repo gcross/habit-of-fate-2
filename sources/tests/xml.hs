@@ -64,29 +64,24 @@ main = doMain
     , testCase "event" $
         runParserOnString "<event title=\"eve\" question=\"quest\"><p>common</p><success choice=\"right\" title=\"good\"><p>yay</p></success><danger choice=\"gamble\" title=\"possibly\" question=\"roll\"><p>feeling lucky</p></danger><averted choice=\"soso\" title=\"maybe\"><p>okay</p></averted><failure choice=\"wrong\" title=\"bad\"><p>no</p></failure><shame>what a shame</shame></event>"
         >>=
-        (@?= let common_title = "eve"
-                 common_content = "common"
+        (@?= let common_narrative = Narrative "eve" "common"
                  common_question = "quest"
                  success_choice = "right"
-                 success_title = "good"
-                 success_content = "yay"
+                 success_narrative = Narrative "good" "yay"
                  danger_choice = "gamble"
-                 danger_title = "possibly"
-                 danger_content = "feeling lucky"
+                 danger_narrative = Narrative "possibly" "feeling lucky"
                  danger_question = "roll"
                  averted_choice = "soso"
-                 averted_title = "maybe"
-                 averted_content = "okay"
+                 averted_narrative = Narrative "maybe" "okay"
                  failure_choice = "wrong"
-                 failure_title = "bad"
-                 failure_content = "no"
+                 failure_narrative = Narrative "bad" "no"
                  shames = ["what a shame"]
              in Right (EventNode $ Event{..})
         )
     , testCase "branch" $
         runParserOnString "<branch title=\"stuff\" question=\"why?\"><p>story time</p><choice selection=\"because\"><narrative title=\"answer\"><p>so it would seem</p></narrative></choice></branch>"
         >>=
-        (@?= Right (BranchNode "stuff" "story time" "why?" [("because",NarrativeNode $ Narrative "answer" "so it would seem")]))
+        (@?= Right (BranchNode (Narrative "stuff" "story time") "why?" [("because",NarrativeNode $ Narrative "answer" "so it would seem")]))
     , testCase "random" $
         runParserOnString "<random><narrative title=\"title\"><p>content</p></narrative></random>"
         >>=
@@ -127,22 +122,17 @@ main = doMain
 </event>
 |]
         >>=
-        (@?= let common_title = "eve"
-                 common_content = "common"
+        (@?= let common_narrative = Narrative "eve" "common"
                  common_question = "quest"
                  success_choice = "right"
-                 success_title = "good"
-                 success_content = "yay"
+                 success_narrative = Narrative "good" "yay"
                  danger_choice = "gamble"
-                 danger_title = "possibly"
-                 danger_content = "feeling lucky"
+                 danger_narrative = Narrative "possibly" "feeling lucky"
                  danger_question = "roll"
                  averted_choice = "soso"
-                 averted_title = "maybe"
-                 averted_content = "okay"
+                 averted_narrative = Narrative "maybe" "okay"
                  failure_choice = "wrong"
-                 failure_title = "bad"
-                 failure_content = "no"
+                 failure_narrative = Narrative "bad" "no"
                  shames = ["\n    it's a shame\n  "]
              in Right (EventNode $ Event{..})
         )
@@ -156,7 +146,7 @@ main = doMain
 </branch>
 |]
         >>=
-        (@?= Right (BranchNode "stuff" "story time" "why?" [("because",NarrativeNode $ Narrative "answer" "so it would seem")]))
+        (@?= Right (BranchNode (Narrative "stuff" "story time") "why?" [("because",NarrativeNode $ Narrative "answer" "so it would seem")]))
     , testCase "random" $
         runParserOnString [i|
 <random><!-- comment -->
