@@ -44,7 +44,6 @@ library:
     - blaze-html
     - bytestring
     - call-stack
-    - cmark
     - containers
     - data-default
     - exceptions

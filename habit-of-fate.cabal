@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 06c56fb92cfe08296d2d8fdc283c9d5419f177249ccdf53f4cc250216251f5ce
+-- hash: f9d06cc4ad9a1c308a2929b8cff80b8b81d25488a8b009a9010a5a5b02366016
 
 name:           habit-of-fate
 version:        0.1.0.0
@@ -30,7 +30,6 @@ library
   exposed-modules:
       HabitOfFate.Data.Content
       HabitOfFate.Data.Gender
-      HabitOfFate.Data.Markdown
       HabitOfFate.Data.Story
       HabitOfFate.Data.Substitutions
       HabitOfFate.HTML
@@ -51,7 +50,6 @@ library
     , blaze-html
     , bytestring
     , call-stack
-    , cmark
     , containers
     , data-default
     , exceptions
